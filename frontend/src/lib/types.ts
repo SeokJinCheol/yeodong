@@ -1,6 +1,7 @@
 export type Mode = 'WALK' | 'DRIVE' | 'TRANSIT';
 export interface PlaceTask { id:string; text:string; description:string; done:boolean }
-export interface PlaceInput { description?:string; tasks?:PlaceTask[]; name: string; lat: number; lng: number; address: string; area: string; visit_date: string | null; stay_minutes: number; required_time?: string | null; required_order?: number | null; google_place_id?: string | null }
+export interface RouteSection { id:number; name:string; visit_date:string }
+export interface PlaceInput { section_id?:number|null; description?:string; tasks?:PlaceTask[]; name: string; lat: number; lng: number; address: string; area: string; visit_date: string | null; stay_minutes: number; required_time?: string | null; required_order?: number | null; google_place_id?: string | null }
 export interface Place extends PlaceInput { id: number }
 export interface TransitStep { mode: string; duration_seconds: number; distance_meters: number; instruction: string; line: string; line_name: string; vehicle: string; departure_stop: string; arrival_stop: string; departure_time?: string; arrival_time?: string; headsign: string; stop_count?: number; agencies: {name:string;url:string}[] }
 export interface Leg { from_id: number; to_id: number; duration_seconds: number; distance_meters: number; mode: Mode; steps: TransitStep[]; departure_time?: string; arrival_time?: string; transfer_count: number; warnings: string[] }
