@@ -27,6 +27,42 @@ npm run dev
 - API 문서: http://127.0.0.1:8001/docs
 - SQLite: `backend/travel.db` (첫 실행 시 생성)
 
+## Nginx에서 `/yeodong/`로 서비스하기
+
+이 Mac의 Homebrew Nginx 설정은 `deploy/nginx/`에 보관합니다.
+`yeodong.conf`는 80번 포트의 `/yeodong/`에서 빌드된 화면을 제공하고,
+`/yeodong/api/` 요청을 `127.0.0.1:8001/api/`로 전달합니다.
+`/yeodong`는 `/yeodong/`로 이동하며, `/rag/`는 아직 연결하지 않았습니다.
+
+```sh
+cd frontend
+npm run build:nginx
+```
+
+백엔드는 앞의 실행 방법대로 8001번 포트에서 별도로 실행해야 합니다.
+Nginx는 백엔드를 자동으로 시작하지 않습니다. 화면 수정 후에는 위 명령으로
+다시 빌드합니다. 개발용 `npm run dev`는 기존 주소와 `/api` 경로를 그대로 사용합니다.
+
+설정 설치 위치:
+
+- 메인 설정: `/usr/local/etc/nginx/nginx.conf`
+- 여동 설정: `/usr/local/etc/nginx/servers/yeodong.conf`
+- 접근/오류 로그: `/usr/local/var/log/nginx/user-access.log`, `user-error.log`
+
+메인 설정을 적용할 때는 기존 설정을 먼저 백업해야 합니다.
+`deploy/nginx/nginx.conf`는 이 Mac의 경로를 사용하므로 다른 서버에서는
+설정과 정적 파일의 절대 경로를 수정하세요.
+
+```sh
+nginx -t -e stderr
+brew services restart nginx
+curl -f http://localhost/yeodong/api/health
+```
+
+접속 주소는 `http://localhost/yeodong/`입니다. 도메인을 연결할 때는 DNS와
+`server_name`을 설정하고 HTTPS 인증서를 적용해야 합니다.
+현재 설정에는 도메인, HTTPS, 인증 기능이 포함되어 있지 않습니다.
+
 ## 구현 범위
 
 - 날짜 선택, 장소 검색/직접 좌표 등록, 체류시간 입력
@@ -192,3 +228,10 @@ Google 최종 경로 소요시간으로 시각을 다시 검증하므로 행렬 
 ### 저장된 동선 재사용
 
 계산된 동선은 SQLite saved_plans에 저장하며 24시간 동안 같은 요청 조건의 결과를 재사용합니다. 날짜·출발/도착·이동수단·계산에 적용한 시간 설정·장소 좌표·체류시간·필수 순서/시각이 캐시 키에 포함됩니다. 설명과 체크리스트는 최신 장소 정보로 합쳐 표시합니다. 재계산 버튼은 force_refresh=true로 캐시를 갱신합니다. 만료 데이터는 다음 동선 요청 시 삭제합니다. UI에 저장 시각을 표시하며 지도 표시 요청 자체는 경로 캐시와 별개입니다.
+
+
+### 날짜별 동선 구간
+
+날짜 아래의 `구간 추가`로 오전·오후·저녁 등 이름을 정한 탭을 만들 수 있습니다. 기존 장소는 `기본 동선`에 유지됩니다. 구간마다 방문 장소, 출발·도착지, 출발 시각과 시간대를 따로 설정하며 경로도 해당 구간만 계산합니다. 장소 추가는 현재 구간에 저장되고, 장소 수정의 `동선 구간`에서 같은 날짜의 다른 구간으로 옮길 수 있습니다. 장소의 방문 날짜를 개별 변경하면 새 날짜의 기본 동선으로 이동합니다. `일정 날짜 변경`은 하루의 모든 구간과 장소를 함께 옮깁니다.
+
+구간과 장소 배정은 SQLite에 저장됩니다. 백엔드 재시작 시 기존 DB에 sections 테이블과 places.section_id를 자동 추가합니다. 출발·도착지는 브라우저에 저장하며, 구간별 시간 설정은 현재 화면을 사용하는 동안 유지됩니다.
