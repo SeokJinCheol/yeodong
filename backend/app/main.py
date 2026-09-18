@@ -1,7 +1,7 @@
 import math
 import hashlib
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 from contextlib import asynccontextmanager
 
@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import db, google, transit, scheduling
 from .config import settings
-from .models import AssignInput, MoveDayInput, Place, PlaceInput, PlanInput, TaskStatus
+from .models import AssignInput, MoveDayInput, Place, PlaceInput, PlanInput, TaskStatus, SectionInput
 from .routing import cluster_places, distance, estimate_matrix, optimal_order
 
 
@@ -29,6 +29,63 @@ def health():
     return {'status': 'ok', 'google_enabled': bool(settings.google_maps_api_key)}
 
 
+@app.get('/api/sections')
+def sections():
+    with db.connection() as conn:
+        return [dict(row) for row in conn.execute('SELECT * FROM sections ORDER BY id')]
+
+
+@app.get('/api/default-sections')
+def default_section_names():
+    with db.connection() as conn:
+        return {row['key'].removeprefix('default-section:'): row['value']
+                for row in conn.execute("SELECT key,value FROM metadata WHERE key LIKE 'default-section:%'")}
+
+
+@app.put('/api/default-sections')
+def rename_default_section(section: SectionInput):
+    visit_date = section.visit_date.isoformat()
+    name = section.name.strip()
+    with db.connection() as conn:
+        conn.execute('INSERT OR REPLACE INTO metadata (key,value) VALUES (?,?)',
+                     (f'default-section:{visit_date}', name))
+    return dict(id=None, name=name, visit_date=visit_date)
+
+
+@app.post('/api/sections', status_code=201)
+def add_section(section: SectionInput):
+    with db.connection() as conn:
+        cursor = conn.execute('INSERT INTO sections (name,visit_date) VALUES (?,?)',
+                              (section.name.strip(), section.visit_date.isoformat()))
+        return dict(id=cursor.lastrowid, name=section.name.strip(), visit_date=section.visit_date.isoformat())
+
+
+@app.put('/api/sections/{section_id}')
+def rename_section(section_id: int, section: SectionInput):
+    with db.connection() as conn:
+        if not conn.execute('UPDATE sections SET name=? WHERE id=? AND visit_date=?',
+                            (section.name.strip(), section_id, section.visit_date.isoformat())).rowcount:
+            raise HTTPException(404, '구간이 없습니다.')
+    return dict(id=section_id, name=section.name.strip(), visit_date=section.visit_date.isoformat())
+
+
+@app.delete('/api/sections/{section_id}', status_code=204)
+def delete_section(section_id: int):
+    with db.connection() as conn:
+        if not conn.execute('SELECT 1 FROM sections WHERE id=?', (section_id,)).fetchone():
+            raise HTTPException(404, '구간이 없습니다.')
+        conn.execute('UPDATE places SET section_id=NULL WHERE section_id=?', (section_id,))
+        conn.execute('DELETE FROM sections WHERE id=?', (section_id,))
+
+
+def validate_section(conn, section_id, visit_date):
+    if section_id is not None and not conn.execute(
+        'SELECT 1 FROM sections WHERE id=? AND visit_date=?',
+        (section_id, visit_date.isoformat() if visit_date else None)
+    ).fetchone():
+        raise HTTPException(422, '선택한 날짜에 속한 구간을 선택해 주세요.')
+
+
 @app.get('/api/places', response_model=list[Place])
 def places():
     return db.all_places()
@@ -41,6 +98,7 @@ def add_place(place: PlaceInput):
         raise HTTPException(422, '할 일 ID가 중복됩니다.')
     values['tasks'] = json.dumps(values['tasks'], ensure_ascii=False)
     with db.connection() as conn:
+        validate_section(conn, place.section_id, place.visit_date)
         if conn.execute('SELECT count(*) FROM places').fetchone()[0] >= 100:
             raise HTTPException(422, '초안에서는 최대 100개 장소를 저장할 수 있습니다.')
         cursor = conn.execute(f"INSERT INTO places ({','.join(values)}) VALUES ({','.join('?' for _ in values)})", list(values.values()))
@@ -54,6 +112,7 @@ def update_place(place_id: int, place: PlaceInput):
         raise HTTPException(422, '할 일 ID가 중복됩니다.')
     values['tasks'] = json.dumps(values['tasks'], ensure_ascii=False)
     with db.connection() as conn:
+        validate_section(conn, place.section_id, place.visit_date)
         cursor = conn.execute(f"UPDATE places SET {','.join(f'{key}=?' for key in values)} WHERE id=?", [*values.values(), place_id])
         if not cursor.rowcount:
             raise HTTPException(404, '장소가 없습니다.')
@@ -77,12 +136,14 @@ async def search(q: str = Query(min_length=2, max_length=200)):
 @app.post('/api/plan')
 async def plan(payload: PlanInput):
     all_places = db.all_places()
-    lookup = {p['id']: p for p in all_places}
+    with db.connection() as conn:
+        validate_section(conn, payload.section_id, payload.visit_date)
+    lookup = {p['id']: p for p in all_places if p['section_id'] == payload.section_id}
     if payload.start_id not in lookup or payload.end_id not in lookup:
         raise HTTPException(404, '출발지 또는 도착지를 다시 선택해 주세요.')
-    stops = [p for p in all_places if p['visit_date'] == payload.visit_date.isoformat() and p['id'] not in {payload.start_id, payload.end_id}]
+    stops = [p for p in lookup.values() if p['visit_date'] == payload.visit_date.isoformat() and p['id'] not in {payload.start_id, payload.end_id}]
     if len(stops) > 8:
-        raise HTTPException(422, '하루 중간 방문지는 최대 8개입니다. 다른 날짜로 나눠 주세요.')
+        raise HTTPException(422, '구간별 중간 방문지는 최대 8개입니다. 다른 구간이나 날짜로 나눠 주세요.')
     nodes = [lookup[payload.start_id], *stops, lookup[payload.end_id]]
     live = bool(settings.google_maps_api_key)
     departure = transit.departure_for(payload)
@@ -153,11 +214,12 @@ def courses():
 @app.post('/api/courses/assign')
 def assign(payload: AssignInput):
     with db.connection() as conn:
+        validate_section(conn, payload.section_id, payload.visit_date)
         ids = set(payload.place_ids)
         found = {row[0] for row in conn.execute('SELECT id FROM places')}
         if not ids <= found:
             raise HTTPException(404, '코스에 삭제된 장소가 있습니다. 새로고침해 주세요.')
-        conn.executemany('UPDATE places SET visit_date=? WHERE id=?', [(payload.visit_date.isoformat(), i) for i in ids])
+        conn.executemany('UPDATE places SET visit_date=?, section_id=? WHERE id=?', [(payload.visit_date.isoformat(), payload.section_id, i) for i in ids])
     return {'updated': len(ids)}
 
 
@@ -168,11 +230,36 @@ def move_day(payload: MoveDayInput):
     with db.connection() as conn:
         if conn.execute('SELECT 1 FROM places WHERE visit_date=?', (payload.target_date.isoformat(),)).fetchone():
             raise HTTPException(409, '이미 일정이 있는 날짜입니다. 빈 날짜를 선택하거나 장소별 날짜를 수정해 주세요.')
+        if conn.execute('SELECT 1 FROM sections WHERE visit_date=?', (payload.target_date.isoformat(),)).fetchone():
+            raise HTTPException(409, '이미 구간이 있는 날짜입니다. 빈 날짜를 선택해 주세요.')
+        if conn.execute('SELECT 1 FROM metadata WHERE key=?', (f'default-section:{payload.target_date.isoformat()}',)).fetchone():
+            raise HTTPException(409, '이미 이름을 지정한 구간이 있는 날짜입니다. 빈 날짜를 선택해 주세요.')
         count = conn.execute('UPDATE places SET visit_date=? WHERE visit_date=?',
                              (payload.target_date.isoformat(), payload.source_date.isoformat())).rowcount
         if not count:
             raise HTTPException(404, '옮길 일정이 없습니다.')
+        conn.execute('UPDATE sections SET visit_date=? WHERE visit_date=?',
+                     (payload.target_date.isoformat(), payload.source_date.isoformat()))
+        conn.execute('UPDATE metadata SET key=? WHERE key=?',
+                     (f'default-section:{payload.target_date.isoformat()}', f'default-section:{payload.source_date.isoformat()}'))
     return {'updated': count}
+
+
+@app.delete('/api/days/{visit_date}', status_code=204)
+def delete_day(visit_date: date):
+    target = visit_date.isoformat()
+    with db.connection() as conn:
+        deleted_ids = {row['id'] for row in conn.execute('SELECT id FROM places WHERE visit_date=?', (target,))}
+        conn.execute('DELETE FROM places WHERE visit_date=?', (target,))
+        conn.execute('DELETE FROM sections WHERE visit_date=?', (target,))
+        conn.execute('DELETE FROM metadata WHERE key=?', (f'default-section:{target}',))
+        # Other days may have used a deleted place as their start or end point.
+        cached_keys = []
+        for row in conn.execute('SELECT cache_key,result FROM saved_plans'):
+            places = json.loads(row['result']).get('places', [])
+            if any(p.get('id') in deleted_ids or p.get('visit_date') == target for p in places):
+                cached_keys.append((row['cache_key'],))
+        conn.executemany('DELETE FROM saved_plans WHERE cache_key=?', cached_keys)
 
 
 @app.patch('/api/places/{place_id}/tasks/{task_id}', response_model=Place)

@@ -37,6 +37,9 @@ def init_db():
             db.execute("ALTER TABLE places ADD COLUMN description TEXT NOT NULL DEFAULT ''")
         if 'tasks' not in columns:
             db.execute("ALTER TABLE places ADD COLUMN tasks TEXT NOT NULL DEFAULT '[]'")
+        db.execute("CREATE TABLE IF NOT EXISTS sections (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, visit_date TEXT NOT NULL)")
+        if 'section_id' not in columns:
+            db.execute("ALTER TABLE places ADD COLUMN section_id INTEGER REFERENCES sections(id)")
         db.execute("CREATE TABLE IF NOT EXISTS saved_plans (cache_key TEXT PRIMARY KEY, result TEXT NOT NULL, saved_at REAL NOT NULL)")
         db.execute("CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT)")
         if not db.execute("SELECT 1 FROM metadata WHERE key='seeded'").fetchone():

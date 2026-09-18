@@ -15,7 +15,13 @@ class TaskStatus(BaseModel):
     done: bool
 
 
+class SectionInput(BaseModel):
+    name: str = Field(min_length=1, max_length=40, pattern=r"\S")
+    visit_date: date
+
+
 class PlaceInput(BaseModel):
+    section_id: int | None = Field(default=None, ge=1)
     name: str = Field(min_length=1, max_length=120, pattern=r"\S")
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)
@@ -35,6 +41,7 @@ class Place(PlaceInput):
 
 
 class PlanInput(BaseModel):
+    section_id: int | None = Field(default=None, ge=1)
     force_refresh: bool = False
     visit_date: date
     start_id: int
@@ -45,6 +52,7 @@ class PlanInput(BaseModel):
 
 
 class AssignInput(BaseModel):
+    section_id: int | None = Field(default=None, ge=1)
     place_ids: list[int] = Field(min_length=1, max_length=100)
     visit_date: date
 
