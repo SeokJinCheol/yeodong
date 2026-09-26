@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, json } from '../lib/api';
-import type { Course, Place, RouteSection } from '../lib/types';
+import type { CopyItineraryResult, Course, Place, RouteSection } from '../lib/types';
 
 export function usePlannerData() {
     const [allPlaces, setPlaces] = useState<Place[]>([]);
@@ -90,6 +90,19 @@ export function usePlannerData() {
             return next;
         });
     }
+    async function copyItinerary(payload: {
+        source_date: string;
+        target_date: string;
+        section_id: number | null;
+        start_id?: number;
+        end_id?: number;
+    }) {
+        let result: CopyItineraryResult | undefined;
+        await runMutation(async () => {
+            result = await api<CopyItineraryResult>('/itineraries/copy', json('POST', payload));
+        });
+        return result!;
+    }
     return {
         allPlaces,
         courses,
@@ -108,5 +121,6 @@ export function usePlannerData() {
         deletePlace,
         changePlaceDate,
         assignCourse,
+        copyItinerary,
     };
 }

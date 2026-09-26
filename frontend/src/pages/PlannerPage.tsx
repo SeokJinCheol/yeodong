@@ -4,6 +4,7 @@ import { api, json, localDate } from '../lib/api';
 import type { MapPlace, Place } from '../lib/types';
 import { Button } from '../components/atoms/Button';
 import { DeleteDayForm } from '../components/molecules/DeleteDayForm';
+import { CopyItineraryForm } from '../components/molecules/CopyItineraryForm';
 import { MoveDayForm } from '../components/molecules/MoveDayForm';
 import { Badge } from '../components/atoms/Badge';
 import { ModeSwitch } from '../components/molecules/ModeSwitch';
@@ -124,6 +125,19 @@ export function PlannerPage() {
         invalidOrder,
     } = fallbackRoute(places, date, start, end);
     const dates = plannerDates(allPlaces, sections, defaultSectionNames, date);
+    async function copyItinerary(target: string) {
+        const result = await data.copyItinerary({
+            source_date: date,
+            target_date: target,
+            section_id: sectionId,
+            start_id: start,
+            end_id: end,
+        });
+        settings.copySection(result);
+        setDate(result.target_date);
+        section.selectSection(result.target_date, result.section_id);
+        setSelectedPlaceId(undefined);
+    }
     async function moveDay(target: string) {
         await mutate(async () => {
             await api('/days/move', json('POST', { source_date: date, target_date: target }));
@@ -344,6 +358,11 @@ export function PlannerPage() {
                                         </p>
                                     )
                                 }
+                                <CopyItineraryForm
+                                    count={ dayPlaces.length }
+                                    busy={ mutating }
+                                    onCopy={ copyItinerary }
+                                />
                                 <MoveDayForm
                                     key={ date }
                                     date={ date }

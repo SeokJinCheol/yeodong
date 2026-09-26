@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Place } from '../lib/types';
+import type { CopyItineraryResult, Place } from '../lib/types';
 import { moveDayEntries, removeDayEntries } from '../lib/planner';
 
 type Endpoints = { start: number; end: number };
@@ -72,6 +72,21 @@ export function useRouteSettings(places: Place[], date: string, sectionId: numbe
         setEndpoints((previous) => moveDayEntries(previous, date, target));
         setSectionTimes((previous) => moveDayEntries(previous, date, target));
     }
+    function copySection(result: CopyItineraryResult) {
+        const key =
+            result.section_id === null
+                ? result.target_date
+                : `${result.target_date}:${result.section_id}`;
+        const copiedStart = start === undefined ? undefined : result.place_id_map[start];
+        const copiedEnd = end === undefined ? undefined : result.place_id_map[end];
+        if (copiedStart !== undefined && copiedEnd !== undefined) {
+            setEndpoints((previous) => ({
+                ...previous,
+                [key]: { start: copiedStart, end: copiedEnd },
+            }));
+        }
+        setSectionTimes((previous) => ({ ...previous, [key]: { departureTime, timeZone } }));
+    }
     function removeDay(deletedIds: Set<number>) {
         setEndpoints((previous) =>
             Object.fromEntries(
@@ -92,6 +107,7 @@ export function useRouteSettings(places: Place[], date: string, sectionId: numbe
         setTimeZone,
         removeSection,
         moveDay,
+        copySection,
         removeDay,
     };
 }

@@ -8,15 +8,26 @@ export function useRouteSections(
     names: Record<string, string>,
     runMutation: (action: () => Promise<unknown>) => Promise<void>,
 ) {
-    const [chosenSectionId, setSectionId] = useState<number | null>(null);
-    const sectionId = sections.some((s) => s.id === chosenSectionId && s.visit_date === date)
-        ? chosenSectionId
-        : null;
+    const [selection, setSelection] = useState<{ date: string; id: number | null }>({
+        date,
+        id: null,
+    });
+    useEffect(() => {
+        setSelection((previous) => (previous.date === date ? previous : { date, id: null }));
+    }, [date]);
+    const sectionId =
+        selection.date === date &&
+        sections.some((s) => s.id === selection.id && s.visit_date === date)
+            ? selection.id
+            : null;
     const daySections = sections.filter((s) => s.visit_date === date);
     const defaultSectionName = names[date] ?? '기본 동선';
-    useEffect(() => {
-        setSectionId(null);
-    }, [date]);
+    function selectSection(targetDate: string, id: number | null) {
+        setSelection({ date: targetDate, id });
+    }
+    function setSectionId(id: number | null) {
+        selectSection(date, id);
+    }
     async function saveSection(action: 'add' | 'rename', name: string) {
         let savedId: number | null = null;
         await runMutation(async () => {
@@ -39,5 +50,13 @@ export function useRouteSections(
         });
         setSectionId(null);
     }
-    return { sectionId, daySections, defaultSectionName, setSectionId, saveSection, deleteSection };
+    return {
+        sectionId,
+        daySections,
+        defaultSectionName,
+        setSectionId,
+        selectSection,
+        saveSection,
+        deleteSection,
+    };
 }

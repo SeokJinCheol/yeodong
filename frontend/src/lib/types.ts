@@ -104,3 +104,10 @@ export interface MapPlace {
     address?: string;
     google_place_id?: string | null;
 }
+export type CopyItineraryResult = {
+    copied: number;
+    target_date: string;
+    section_id: number | null;
+    section_name: string;
+    place_id_map: Record<string, number>;
+};
