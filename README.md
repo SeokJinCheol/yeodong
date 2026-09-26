@@ -1,7 +1,7 @@
 # 여동 — 여행의 동선을 잇다
 
 React + TypeScript / FastAPI / SQLite로 구현한 여행 동선 플래너 초안입니다.
-Google 키가 없어도 도쿄 샘플 데이터로 전체 흐름을 확인할 수 있습니다.
+Google API 키 없이 일정 관리와 지도·장소 검색을 사용할 수 있습니다. 경로 계산에는 Valhalla 서버가 필요합니다.
 
 ## 실행
 
@@ -72,36 +72,57 @@ curl -f http://localhost/yeodong/api/health
 - 도보·차량·대중교통 전환, 장소 변경 후 자동 동선 재계산
 - 각 구간 시간/거리, 하루 총 이동시간·거리, 이동과 체류 합계
 - 날짜 미정 장소의 근접 군집 추천, 코스를 선택한 날짜에 배정
-- Google Maps 경로 선과 순번 마커
+- OpenStreetMap 지도, Valhalla 경로선과 순번 마커
 - 브라우저 화면 크기에 맞춘 반응형 레이아웃
 
 출발/도착지는 브라우저 localStorage에 날짜별로 보관합니다. 장소와 방문 날짜는 SQLite에 저장합니다.
 한 장소에는 방문 날짜 하나를 지정합니다. 반복 방문은 별도 등록하세요.
 출발지와 도착지가 같으면 왕복 코스를 계산합니다. 출발·도착지 체류시간은 합계에서 제외합니다.
 
-## Google Maps 설정
+## Valhalla 경로 계산과 Google 지도 내보내기
 
-Google Cloud 프로젝트에서 결제 연결 및 아래 API를 활성화합니다.
+`backend/.env`에 여행 지역의 OSM 지도 타일을 갖춘 Valhalla 서버 주소를 설정한 뒤 백엔드를 재시작합니다.
 
-| 키 | 설정 위치 | 사용 API | 권장 제한 |
-|---|---|---|---|
-| 서버 키 | `backend/.env`의 `GOOGLE_MAPS_API_KEY` | Routes API, Places API (New) | 서버 IP 및 API 제한 |
-| 브라우저 키 | `frontend/.env.local`의 `VITE_GOOGLE_MAPS_API_KEY` | Maps JavaScript API | HTTP referrer 및 API 제한 |
+```dotenv
+VALHALLA_URL=http://localhost:8002
+```
 
-브라우저 키는 클라이언트에 공개되는 키입니다. 서버 키를 `VITE_` 변수에 넣지 마세요.
-키 변경 후 해당 개발 서버를 재시작합니다. 실제 Google 호출에는 사용량에 따른 비용이 발생합니다.
-경로를 계산할 때 장소 수 N에 대해 N×N개 행렬 요소와 경로 조회 1회를 요청합니다.
-장소 검색은 검색 버튼으로 실행하며, 경로 변경은 350ms 지연 후 계산합니다.
+로컬 Docker 실행 구성은 `deploy/valhalla/compose.yaml`에 있습니다. 지도 준비와 시작·중지 명령은 [Valhalla 실행 안내](deploy/valhalla/README.md)를 참고하세요.
+위 주소는 로컬 기본값이며 공개 서버로 자동 전송하지 않습니다.
+배포 환경에서는 백엔드에서 접근할 수 있는 Valhalla 주소를 지정하세요.
+`GET /status`, `POST /sources_to_targets`, `POST /route`가 제공되는 서버를 사용합니다.
 
-연동 흐름:
+1. 도보는 `pedestrian`, 차량은 `auto`로 이동시간 행렬을 조회합니다.
+2. 기존 필수 순서·필수 도착 시각·체류시간 조건을 반영해 방문 순서를 정합니다.
+3. Valhalla `/route`로 확정 순서의 구간 시간·거리·GeoJSON 경로를 조회합니다.
+4. **Google 지도에서 동선 열기**로 출발지·경유지·도착지의 좌표와 순서를 전달합니다.
 
-1. Places Text Search로 이름·좌표·Place ID 선택
-2. Routes Compute Route Matrix로 장소 간 이동시간 조회
-3. 서버에서 출발·도착 고정 최단 방문 순서 계산
-4. Compute Routes로 해당 순서의 구간 거리·시간·GeoJSON 경로 조회
-5. Maps JavaScript API에 마커와 Polyline 표시
+Google Routes API를 호출하지 않으며, 실패 시 직선 추정치로 대체하지 않습니다.
+Google Maps URL에는 API 키가 필요하지 않습니다. 모바일 경유지 제한에 맞춰 중간 경유지를 최대 3개씩 나누고,
+다음 링크는 이전 링크의 도착지에서 시작합니다. Google 지도는 전달된 순서를 기준으로 경로를 다시 계산하므로
+Valhalla의 도로 경로·시간과 다를 수 있습니다. 출발 시각과 예약 조건은 URL로 전달되지 않습니다.
 
-공식 문서: [Text Search](https://developers.google.com/maps/documentation/places/web-service/text-search), [Compute Route Matrix](https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRouteMatrix), [Compute Routes](https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes), [지도 로딩](https://developers.google.com/maps/documentation/javascript/load-maps-js-api).
+앱 내 지도는 **Leaflet + OpenStreetMap**으로 표시합니다. Google SDK와 Places API는 사용하지 않습니다.
+Google 지도는 완성된 동선을 여는 외부 URL로만 연결합니다.
+배경 타일은 현재 화면 영역만 브라우저에서 요청하며, 지도에 OSM 출처를 표시합니다.
+지도 크기는 날짜·구간·화면 너비 변경 시 자동 갱신합니다. 배경 타일 오류 시 재시도 안내를 표시하고 방문지와 경로선은 유지합니다.
+
+장소 검색은 OSM 기반 **Photon**을 사용합니다. 검색 버튼으로만 요청하며, 서버에서 요청 간격 1초와 24시간 캐시를 적용합니다.
+기본 공개 데모 서버는 소규모 개인 사용을 위한 설정입니다. 사용량이 늘면 `PHOTON_URL`을 자체 서버로 변경하세요.
+일부 장소는 현지어 또는 영문 검색이 필요합니다. 지도를 클릭해 좌표로 등록할 수도 있습니다.
+
+| 설정 | 위치 | 기본값 |
+|---|---|---|
+| `PHOTON_URL` | `backend/.env` | `https://photon.komoot.io` |
+| `VITE_MAP_TILE_URL` | `frontend/.env.local` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` |
+
+새 타일 공급자를 사용하는 경우 해당 공급자의 출처 표기도 함께 반영하세요.
+[OpenStreetMap 타일 정책](https://operations.osmfoundation.org/policies/tiles/)에 따라 브라우저 캐시를 유지하고 대량·오프라인 다운로드는 제공하지 않습니다.
+[Photon 공개 서버 안내](https://github.com/komoot/photon#demo-server)에 따라 제한된 요청량을 유지해야 합니다.
+
+공식 문서: [Valhalla Matrix](https://valhalla.github.io/valhalla/api/matrix/),
+[Valhalla Route](https://valhalla.github.io/valhalla/api/route/api-reference/),
+[Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started).
 
 ## 알고리즘과 초안의 제한
 
@@ -120,11 +141,11 @@ Held–Karp 동적 계획법으로 **조회한 이동시간 행렬 기준** 최�
 추천명은 등록한 지역을 사용합니다. 군집은 좌표로 정하며 지역명이 같다는 이유로 합치지 않습니다.
 숙박 여부나 1박/2박 일정 분할은 아직 구현하지 않았습니다.
 
-### 데모 모드
+### 서버 연결과 미리보기
 
-서버 키가 없으면 직선거리와 일정한 속도(도보 4.5km/h, 차량 25km/h)로 추정합니다.
-브라우저 키가 없으면 지도 대신 좌표 기반 개념도를 표시합니다. 실제 도로·교통을 나타내지 않습니다.
-화면에 추정치와 샘플 데이터를 표시하며, Google 요청 실패를 데모 값으로 조용히 대체하지 않습니다.
+Valhalla 연결 실패 시 오류를 표시하고 등록된 장소를 보존합니다.
+Map 모드는 경로 API를 호출하지 않고 방문 순서만 보여줍니다.
+Map 모드에서도 실제 OSM 배경 지도는 표시하며, 점선은 방문 순서만 나타냅니다.
 
 ### 다음 확장
 
@@ -133,7 +154,6 @@ Held–Karp 동적 계획법으로 **조회한 이동시간 행렬 기준** 최�
 - 숙박 포함 다일 추천, 대중교통 시간 변화까지 고려한 방문 순서 탐색
 - 장소별 복수 방문, 날짜별 출발/도착 설정의 서버 저장
 - 장소 검색 입력 자동완성, API 사용량 제한 및 요청 취소
-- 운영 환경의 Google 데이터 보관 정책 검토 및 보관 기간 관리
 
 현재는 로컬 단일 사용자용 초안입니다. 인증 없이 공용 서버에 노출하는 운영 구성은 포함하지 않습니다.
 
@@ -154,7 +174,8 @@ backend/
     models.py     요청/응답 검증
     db.py         SQLite 접근
     routing.py    순서 최적화 및 군집
-    google.py     Google API 어댑터
+    geocoding.py  Photon 장소 검색 어댑터
+    valhalla.py   Valhalla 행렬·경로 어댑터
     config.py     환경 설정
   tests/          알고리즘 및 API 검증
 ```
@@ -173,32 +194,16 @@ npm run build
 
 테스트는 임시 SQLite DB를 사용해 샘플 데이터나 사용자 데이터를 변경하지 않습니다.
 검증 환경의 Python 의존성 버전은 `backend/requirements.lock.txt`에 기록했습니다.
-Google 어댑터 테스트는 모의 응답을 사용하며 실제 키로 호출한 통합 테스트는 별도로 필요합니다.
+Valhalla 및 Photon 어댑터 테스트는 모의 응답을 사용합니다. 실제 Valhalla 서버의 지도 데이터로 통합 확인이 필요합니다.
+Google 지도 URL 순서·분할 검증: `cd frontend && node --test tests/mapsUrl.test.mjs` (Node 22.18 이상).
 
 
 ## 대중교통
 
-- `TRANSIT` 이동수단과 출발 시각(기본 09:00), 여행지 시간대(기본 Asia/Tokyo)를 선택합니다.
-- API 요청에는 `departure_time`(HH:mm), `time_zone`(IANA 시간대)을 전달할 수 있습니다.
-- 여행 출발 시각의 이동시간 행렬로 방문 순서를 정한 뒤, 방문 구간별로 경로를 조회합니다.
-- 다음 구간은 앞 구간의 소요시간과 중간 장소 체류시간을 더한 시각으로 조회합니다.
-- 버스·철도 노선, 승하차역, 승하차 시각, 방향, 정류장 수, 환승 횟수, 도보 구간을 표시합니다.
-- 총 이동시간은 Google 응답의 구간 시간을 합산합니다. 도보·대기·환승이 포함되며 체류시간은 별도 합산합니다.
-- 시각별 운행 변화 때문에 전체 일정의 전역 최단 순서는 보장하지 않습니다.
-- Google 키가 없거나 경로가 없는 경우 오류를 표시합니다. 대중교통 시간/노선을 임의로 추정하지 않습니다.
-- 조회 가능 시각은 현재 기준 과거 7일~미래 100일입니다. 지역별 운행 데이터 지원 범위에 따라 조회가 불가능할 수 있습니다.
-- 기존 Routes API 키를 사용하며 별도 API 활성화는 필요하지 않습니다. 매 계산마다 N×N 행렬 요소와 N−1회 구간 경로 조회를 요청합니다.
-
-[Google 대중교통 경로 공식 문서](https://developers.google.com/maps/documentation/routes/transit-route)
-
-### 일본 대중교통 제한
-
-Google Routes API는 일본 교통 사업자의 대중교통 경로를 지원하지 않습니다.
-현재 도쿄 일정에서는 대중교통 자동 최적화·소요시간·노선 표시를 제공할 수 없습니다.
-조회 실패 시 등록 순서로 구간별 Google 지도 대중교통 링크를 제공합니다.
-이 링크에는 날짜/출발시각을 전달하지 않으므로 Google 지도에서 다시 설정해야 합니다.
-일본 내 앱 통합 경로 계산에는 별도 일본 교통 API의 계약 및 연동이 필요합니다.
-근거: https://developers.google.com/maps/faq#transit_directions_countries
+현재 Valhalla 행렬 기반 최적화는 도보·차량을 지원합니다.
+`TRANSIT` 요청은 422와 `X-Route-Unavailable: true`를 반환하며 Google API로 우회하지 않습니다.
+대중교통 선택 시 필수 순서를 반영한 방문 목록에 대해 구간별 Google 지도 URL을 제공합니다.
+이 목록은 최적화된 경로가 아니며, 날짜·출발 시각은 Google 지도에서 설정해야 합니다.
 
 ## 장소 수정과 필수 시각
 
@@ -209,8 +214,7 @@ Google Routes API는 일본 교통 사업자의 대중교통 경로를 지원하
 일찍 도착하면 지정 시각까지 기다린 뒤 체류시간이 시작됩니다. 하루 합계는 이동·대기·중간 장소 체류시간을 포함합니다.
 시각 조건이 있으면 최대 8개 중간 방문지의 순서를 탐색해 조건을 만족하면서 종료 시각이 가장 빠른 경로를 선택합니다.
 지킬 수 없는 시각은 장소별 지각 시간과 함께 표시하며, 그 경로는 조건 미충족 경로입니다.
-Google 최종 경로 소요시간으로 시각을 다시 검증하므로 행렬 기반 탐색과 결과가 다를 수 있습니다.
-대중교통의 다음 구간 조회에도 필수 시각까지의 대기와 체류시간을 반영합니다.
+Valhalla 최종 경로 소요시간으로 시각을 다시 검증하므로 행렬 기반 탐색과 결과가 다를 수 있습니다.
 
 ### 일정 날짜 변경과 출발 안내
 
