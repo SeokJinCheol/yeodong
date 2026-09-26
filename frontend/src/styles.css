@@ -2724,3 +2724,13 @@ input[type='time']::-webkit-datetime-edit {
         margin-bottom: 8px;
     }
 }
+
+/* Avoid input-focus zoom on phones and touch devices while preserving pinch zoom.
+   Override compact component font sizes consistently across all forms. */
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+    input:not([type='checkbox']):not([type='radio']),
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
