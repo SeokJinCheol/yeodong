@@ -22,6 +22,12 @@
 
 화면 컴포넌트에는 필요한 값과 동작 콜백을 전달합니다. API 호출이나 페이지 전체 상태를 새 UI 컴포넌트로 옮기지 않습니다.
 
+## 일정 복사와 모바일 화면
+
+`CopyItineraryForm`은 대상 날짜 입력을 담당하고, `usePlannerData.copyItinerary`가 복사 API 호출과 데이터 새로고침을 처리합니다. 복사 후 `useRouteSettings.copySection`은 새 장소 ID에 맞춰 출발·도착지와 시간 설정을 옮기며, `useRouteSections.selectSection`으로 대상 날짜의 복사된 구간을 선택합니다. 원본 설정은 유지합니다.
+
+모바일에서는 `DailyItinerarySettings`의 일정 설정이 기본으로 접혀 STEP 목록을 먼저 표시합니다. 복사·날짜 이동·삭제·출발 설정은 ‘일정 설정’에서 펼칩니다. 작은 동선 탭 옆 ‘관리’ 버튼은 구간 추가·이름 변경·삭제를 펼칩니다. 데스크톱에서는 설정과 관리 버튼이 계속 표시됩니다.
+
 ## 검증
 
 ```sh
