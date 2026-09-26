@@ -769,21 +769,62 @@ main {
     justify-content: center;
     align-items: center;
     padding: 20px;
+    height: 100dvh;
+    bottom: auto;
 }
 .modal {
+    --modal-padding-block: 28px;
+    --modal-padding-inline: 28px;
+    display: flex;
+    flex-direction: column;
     width: 510px;
-    max-height: 92vh;
-    overflow: auto;
+    max-width: 100%;
+    min-width: 0;
+    max-height: 100%;
+    overflow: hidden;
     background: #fff;
     border-radius: 18px;
-    padding: 28px;
+    padding: 0;
     box-shadow: 0 20px 90px #15241c44;
 }
-.modal header {
+.modal > header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 23px;
+    flex-shrink: 0;
+    gap: 12px;
+    padding: var(--modal-padding-block) var(--modal-padding-inline) 16px;
+    margin: 0;
+    border-bottom: 1px solid #e5e9df;
+}
+.modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding-block: 16px;
+    padding: 16px var(--modal-padding-inline);
+    scrollbar-width: thin;
+    scrollbar-color: #b6c5b9 transparent;
+}
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.modal-body::-webkit-scrollbar-thumb {
+    background: #b6c5b9;
+    border-radius: 999px;
+}
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #8ca391;
+}
+.modal-footer {
+    flex-shrink: 0;
+    padding: 16px var(--modal-padding-inline) var(--modal-padding-block);
+    border-top: 1px solid #e5e9df;
+    background: #fff;
 }
 .modal h2 {
     margin-top: 5px;
@@ -796,7 +837,7 @@ main {
     flex: 1;
     font-size: 12px;
 }
-.modal > .small {
+.modal-body > .small {
     margin: 12px 0 17px;
 }
 .modal form > label,
@@ -966,7 +1007,8 @@ main {
         display: none;
     }
     .modal {
-        padding: 20px;
+        --modal-padding-block: 20px;
+        --modal-padding-inline: 20px;
     }
     .modal h2 {
         font-size: 19px;
@@ -1407,6 +1449,31 @@ textarea:focus {
     .date-tabs {
         height: 45px;
         flex: 1 1 100%;
+    }
+    .modal-backdrop {
+        padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+            max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+    .modal input,
+    .modal select,
+    .modal textarea {
+        font-size: 16px;
+        max-width: 100%;
+        min-height: 44px;
+    }
+    .modal input[type='checkbox'] {
+        min-height: auto;
+    }
+    .modal fieldset {
+        min-width: 0;
+    }
+    .modal input[type='date'] {
+        appearance: none;
+        -webkit-appearance: none;
+        min-width: 0;
+    }
+    .search-row > button {
+        flex-shrink: 0;
     }
     .calendar-day {
         padding: 5px;
@@ -1979,12 +2046,9 @@ input[type='time']::-webkit-datetime-edit {
     .stat-card strong {
         font-size: 17px;
     }
-    .modal-backdrop {
-        padding: 12px;
-    }
     .modal {
         width: 100%;
-        padding: 20px 16px;
+        --modal-padding-inline: 16px;
     }
 }
 
