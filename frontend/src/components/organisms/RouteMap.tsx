@@ -1,109 +1,272 @@
 import { useEffect, useRef, useState } from 'react';
-import { Map as MapIcon, Navigation } from 'lucide-react';
-import { api } from '../../lib/api';
+import { Map as MapIcon } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import type { Plan, Place, MapPlace } from '../../lib/types';
 
-let mapsPromise: Promise<void> | undefined;
-function loadMaps(key: string) {
-  if (!mapsPromise) mapsPromise = new Promise<void>((resolve,reject)=>{
-    const name = '__yeodongMapsReady';
-    (window as unknown as Record<string,unknown>)[name] = ()=>resolve();
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=${name}&loading=async&language=ko`;
-    script.onerror = ()=>reject(new Error('지도를 불러오지 못했습니다. 브라우저 API 키와 네트워크를 확인해 주세요.'));
-    document.head.append(script);
-  });
-  return mapsPromise;
+export function RouteMap({
+    plan,
+    selectedPlace,
+    fallbackPlaces = [],
+    onAddPlace,
+}: {
+    plan: Plan | null;
+    selectedPlace?: Place;
+    fallbackPlaces?: Place[];
+    onAddPlace?: (position: MapPlace) => void;
+}) {
+    const container = useRef<HTMLDivElement>(null);
+    const mapRef = useRef<L.Map | null>(null);
+    const tilesRef = useRef<L.TileLayer | null>(null);
+    const boundsRef = useRef<L.LatLngBounds | null>(null);
+    const markersRef = useRef<{ marker: L.Marker; ids: number[]; label: string }[]>([]);
+    const addRef = useRef(onAddPlace);
+    addRef.current = onAddPlace;
+    const [tileError, setTileError] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const places = plan?.places ?? fallbackPlaces;
+    const visible =
+        selectedPlace && !places.some((p) => p.id === selectedPlace.id)
+            ? [...places, selectedPlace]
+            : places;
+    const geometry = JSON.stringify({
+        places: visible.map(({ id, lat, lng, name, address }) => ({ id, lat, lng, name, address })),
+        route: plan?.coordinates ?? [],
+        planned: !!plan,
+    });
+
+    function fitMap() {
+        const map = mapRef.current;
+        if (!map) return;
+        map.invalidateSize();
+        if (boundsRef.current?.isValid())
+            map.fitBounds(boundsRef.current, { padding: [45, 45], maxZoom: 16 });
+        else map.setView([35.6812, 139.7671], 13);
+    }
+
+    useEffect(() => {
+        if (!container.current) return;
+        const map = L.map(container.current, { scrollWheelZoom: false }).setView(
+            [35.6812, 139.7671],
+            13,
+        );
+        mapRef.current = map;
+        const tiles = L.tileLayer(
+            import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            {
+                maxZoom: 19,
+                attribution:
+                    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+            },
+        ).addTo(map);
+        tilesRef.current = tiles;
+        const failed = new Set<HTMLElement>();
+        const updateError = () => setTileError(failed.size > 0);
+        tiles.on('loading', () => setLoading(true));
+        tiles.on('load', () => setLoading(false));
+        tiles.on('tileerror', (event) => {
+            failed.add((event as L.TileErrorEvent).tile);
+            updateError();
+        });
+        tiles.on('tileload', (event) => {
+            failed.delete((event as L.TileEvent).tile);
+            updateError();
+        });
+        tiles.on('tileunload', (event) => {
+            failed.delete((event as L.TileEvent).tile);
+            updateError();
+        });
+        const choosePosition = (event: L.LeafletMouseEvent) => {
+            if (!addRef.current) return;
+            const position = { lat: event.latlng.lat, lng: event.latlng.lng };
+            const content = document.createElement('div');
+            content.className = 'map-place-popup';
+            const title = document.createElement('strong');
+            title.textContent = '선택한 위치';
+            const coordinates = document.createElement('p');
+            coordinates.textContent = `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = '이 위치에 장소 추가';
+            button.onclick = () => {
+                map.closePopup();
+                addRef.current?.(position);
+            };
+            content.append(title, coordinates, button);
+            L.popup().setLatLng(event.latlng).setContent(content).openOn(map);
+        };
+        map.on('click', choosePosition);
+        map.on('contextmenu', choosePosition);
+        // Grid/date/section changes can resize the panel without a window resize.
+        const observer = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+        observer.observe(container.current);
+        return () => {
+            observer.disconnect();
+            tiles.off();
+            map.remove();
+            mapRef.current = null;
+            tilesRef.current = null;
+            markersRef.current = [];
+        };
+    }, []);
+
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map) return;
+        const layer = L.featureGroup().addTo(map);
+        const groups = new Map<string, { place: Place; ids: number[]; labels: string[] }>();
+        visible.forEach((place, i) => {
+            const key = `${place.lat},${place.lng}`;
+            const group = groups.get(key) ?? { place, ids: [], labels: [] };
+            group.ids.push(place.id);
+            group.labels.push(
+                i >= places.length
+                    ? '선택'
+                    : i === 0
+                        ? '출발'
+                        : i === places.length - 1
+                            ? '도착'
+                            : String(i),
+            );
+            groups.set(key, group);
+        });
+        markersRef.current = [];
+        groups.forEach(({ place, ids, labels }) => {
+            const label =
+                labels.includes('출발') && labels.includes('도착') ? '출발·도착' : labels.join('/');
+            const marker = L.marker([place.lat, place.lng], {
+                icon: markerIcon(label, false),
+                title: `${place.name} · ${label}`,
+                alt: place.name,
+            }).addTo(layer);
+            const content = document.createElement('div');
+            content.className = 'map-place-popup';
+            const title = document.createElement('strong');
+            title.textContent = place.name;
+            const address = document.createElement('p');
+            address.textContent = place.address;
+            content.append(title, address);
+            marker.bindPopup(content);
+            markersRef.current.push({ marker, ids, label });
+        });
+        const path: L.LatLngTuple[] = plan
+            ? plan.coordinates.map(([lng, lat]) => [lat, lng])
+            : places.map((p) => [p.lat, p.lng]);
+        if (path.length > 1)
+            L.polyline(path, {
+                color: plan ? '#27634d' : '#a47a50',
+                weight: 4,
+                opacity: 0.9,
+                dashArray: plan ? undefined : '8 8',
+            }).addTo(layer);
+        boundsRef.current = layer.getBounds();
+        fitMap();
+        return () => {
+            layer.remove();
+        };
+    }, [geometry]);
+
+    useEffect(() => {
+        markersRef.current.forEach(({ marker, ids, label }) => {
+            const active = selectedPlace !== undefined && ids.includes(selectedPlace.id);
+            marker.setIcon(markerIcon(label, active));
+            marker.setZIndexOffset(active ? 1000 : 0);
+        });
+        if (selectedPlace) mapRef.current?.setView([selectedPlace.lat, selectedPlace.lng], 16);
+    }, [selectedPlace?.id, selectedPlace?.lat, selectedPlace?.lng, geometry]);
+
+    return (
+        <section className="map-panel">
+            <div className="map-heading">
+                <span>
+                    <MapIcon size={ 17 } />
+                    오늘의 여행 지도
+                </span>
+                <span className="map-status">
+                    OpenStreetMap
+                </span>
+                <button
+                    type="button"
+                    className="text-button"
+                    onClick={ fitMap }
+                >
+                    전체 동선 보기
+                </button>
+            </div>
+            {
+                onAddPlace && (
+                    <p className="map-position-note">
+                        지도를 클릭하거나 길게 눌러 장소를 추가하세요.
+                    </p>
+                )
+            }
+            {
+                selectedPlace && (
+                    <div className="map-selection">
+                        {
+                            selectedPlace.name
+                        }
+                        { ' · 선택한 장소' }
+                    </div>
+                )
+            }
+            <div className="route-map-wrap">
+                <div
+                    ref={ container }
+                    className="route-map"
+                    aria-label="여행 지도"
+                />
+                {
+                    loading && !tileError && (
+                        <span
+                            className="map-loading"
+                            role="status"
+                        >
+                            지도 불러오는 중…
+                        </span>
+                    )
+                }
+            </div>
+            {
+                tileError && (
+                    <div
+                        className="map-tile-error"
+                        role="alert"
+                    >
+                        배경 지도를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.
+                        { ' ' }
+                        <button
+                            type="button"
+                            onClick={ () => tilesRef.current?.redraw() }
+                        >
+                            다시 불러오기
+                        </button>
+                    </div>
+                )
+            }
+            <div className="map-footer">
+                <i />
+                <span>
+                    {
+                        plan
+                            ? 'Valhalla로 계산한 실제 이동 경로'
+                            : '방문 순서 표시 · 점선은 실제 이동 경로가 아닙니다'
+                    }
+                </span>
+            </div>
+        </section>
+    );
 }
 
-export function RouteMap({plan, selectedPlace, fallbackPlaces=[], onAddPlace}: {plan: Plan | null; selectedPlace?: Place; fallbackPlaces?:Place[];onAddPlace?:(position:MapPlace)=>void}) {
-  const addRef=useRef(onAddPlace);
-  addRef.current=onAddPlace;
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<{marker:google.maps.Marker; ids:number[]; label:string}[]>([]);
-  const selectedRef = useRef(selectedPlace);
-  selectedRef.current = selectedPlace;
-  const highlight = () => {
-    const selected=selectedRef.current;
-    markersRef.current.forEach(({marker,ids,label})=>{
-      const active=!!selected && ids.includes(selected.id);
-      marker.setIcon({path:google.maps.SymbolPath.CIRCLE,scale:label.length>2?25:active?21:16,fillColor:active?'#d77924':'#27634d',fillOpacity:1,strokeColor:'#fff',strokeWeight:active?5:3});
-      marker.setZIndex(active?1000:label==='출발·도착'?900:1);
+function markerIcon(label: string, active: boolean) {
+    const content = document.createElement('span');
+    content.className = `route-map-pin${active ? ' selected' : ''}`;
+    content.textContent = label;
+    return L.divIcon({
+        html: content,
+        className: 'route-map-marker',
+        iconSize: [64, 36],
+        iconAnchor: [32, 18],
+        popupAnchor: [0, -20],
     });
-    if(selected && mapRef.current) {mapRef.current.panTo(selected);mapRef.current.setZoom(16);}
-  };
-  const ref = useRef<HTMLDivElement>(null);
-  const [error,setError] = useState('');
-  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const displayPlaces=plan?.places??fallbackPlaces;
-  const mapGeometry=JSON.stringify({places:displayPlaces.map(({id,lat,lng,name})=>({id,lat,lng,name})),coordinates:plan?.coordinates??[]});
-  useEffect(()=>{
-    if(!key) return;
-    setError('');
-    let cancelled = false;
-    let info:google.maps.InfoWindow | undefined;
-    let clickVersion=0;
-    const overlays: (google.maps.Marker | google.maps.Polyline)[] = [];
-    loadMaps(key).then(()=>{
-      if(cancelled || !ref.current) return;
-      const map = new google.maps.Map(ref.current,{center:displayPlaces[0] ?? selectedPlace ?? {lat:35.6812,lng:139.7671},zoom:14,mapTypeControl:false,streetViewControl:false});
-      mapRef.current=map;
-      info=new google.maps.InfoWindow();
-      info.addListener('closeclick',()=>{clickVersion++;});
-      const showPlace=(place:MapPlace)=>{
-        const content=document.createElement('div');content.className='map-place-popup';
-        const title=document.createElement('strong');title.textContent=place.name??'선택한 위치';
-        const address=document.createElement('p');address.textContent=place.address??'';
-        const add=document.createElement('button');add.type='button';add.textContent='위치 추가';
-        add.onclick=()=>{info?.close();addRef.current?.(place);};
-        content.append(title,address,add);info?.setContent(content);info?.setPosition(place);info?.open({map});
-      };
-      map.addListener('click',async(event:google.maps.IconMouseEvent)=>{
-        const version=++clickVersion;
-        if(!event.placeId){info?.close();return;}
-        event.stop();
-        info?.setPosition(event.latLng);info?.setContent('장소 정보를 불러오는 중…');info?.open({map});
-        try {
-          const place=await api<MapPlace>(`/map-place?place_id=${encodeURIComponent(event.placeId)}`);
-          if(!cancelled && version===clickVersion)showPlace(place);
-        } catch(e){if(!cancelled && version===clickVersion){const message=document.createElement('p');message.textContent=(e as Error).message;info?.setContent(message);}}
-      });
-      const addAtPosition=(event:google.maps.MapMouseEvent)=>{
-        if(event.latLng)addRef.current?.({lat:event.latLng.lat(),lng:event.latLng.lng()});
-      };
-      map.addListener('contextmenu',addAtPosition);
-      map.addListener('rightclick',addAtPosition);
-      const bounds = new google.maps.LatLngBounds();
-      const points=displayPlaces;
-      const visible=selectedPlace && !points.some(p=>p.id===selectedPlace.id)?[...points,selectedPlace]:points;
-      const groups=new Map<string,{place:Place;ids:number[];labels:string[]}>();
-      visible.forEach((p,i)=>{
-        const coord=`${p.lat},${p.lng}`;
-        const group=groups.get(coord) ?? {place:p,ids:[],labels:[]};
-        group.ids.push(p.id);
-        group.labels.push(i===0 && points.length>1?'出':i===points.length-1 && points.length>1?'到':String(i));
-        groups.set(coord,group);
-      });
-      markersRef.current=[];
-      groups.forEach(({place,ids,labels})=>{
-        const label=labels.includes('出') && labels.includes('到')?'출발·도착':labels.map(l=>l==='出'?'출발':l==='到'?'도착':l).join('/');
-        bounds.extend(place);
-        const marker=new google.maps.Marker({map,position:place,label:{text:label,color:'#ffffff',fontSize:label.length>2?'10px':'12px'},title:`${place.name} · ${label}`});
-        marker.addListener('click',()=>{clickVersion++;showPlace(place);});
-        markersRef.current.push({marker,ids,label});overlays.push(marker);
-      });
-      if(plan) overlays.push(new google.maps.Polyline({map,path:plan.coordinates.map(([lng,lat])=>({lat,lng})),strokeColor:'#27634d',strokeOpacity:0.9,strokeWeight:5}));
-      if(!plan && points.length>1) overlays.push(new google.maps.Polyline({map,path:points,strokeOpacity:0,icons:[{icon:{path:'M 0,-1 0,1',strokeOpacity:0.7,strokeColor:'#a47a50',scale:3},offset:'0',repeat:'14px'}]}));
-      if(visible.length)map.fitBounds(bounds,65);
-      highlight();
-    }).catch(e=>{if(!cancelled)setError(e.message);});
-    return ()=>{cancelled=true;info?.close();if(info)google.maps.event.clearInstanceListeners(info);if(mapRef.current)google.maps.event.clearInstanceListeners(mapRef.current);mapRef.current=null;markersRef.current=[];overlays.forEach(o=>{google.maps.event.clearInstanceListeners(o);o.setMap(null);});};
-  },[key,mapGeometry,selectedPlace && !displayPlaces.some(p=>p.id===selectedPlace.id)?selectedPlace.id:null]);
-  useEffect(()=>{if(mapRef.current)highlight();},[selectedPlace]);
-  const places = displayPlaces.length?displayPlaces:(selectedPlace?[selectedPlace]:[]);
-  const selectedLabel=selectedPlace ? `${selectedPlace.name} · 선택한 장소` : '';
-  const lngs=places.map(p=>p.lng), lats=places.map(p=>p.lat);
-  const minX=Math.min(...lngs),maxX=Math.max(...lngs),minY=Math.min(...lats),maxY=Math.max(...lats);
-  const pts=places.map(p=>({x:85+(p.lng-minX)/(maxX-minX || 1)*530,y:95+(maxY-p.lat)/(maxY-minY || 1)*350}));
-  return <section className="map-panel"><div className="map-heading"><span><MapIcon size={17}/>오늘의 여행 지도</span><span className="map-status">{key?'Google Maps':'미리보기'}</span></div>{key && onAddPlace && <p className="map-position-note">장소 아이콘 클릭 → 위치 추가 · 빈 지도는 우클릭으로 추가</p>}{selectedLabel && <div className="map-selection">{selectedLabel}</div>}{key ? <div ref={ref} className="google-map"/> : <div className="illustrated-map"><svg viewBox="0 0 700 540" role="img" aria-label="등록한 좌표를 연결한 동선 개념도. 실제 도로 지도가 아닙니다."><defs><pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse" patternTransform="rotate(-14)"><rect width="64" height="64" fill="#eeede6"/><path d="M 64 0 L 0 0 0 64" fill="none" stroke="#fff" strokeWidth="9"/></pattern><filter id="shadow"><feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity=".13"/></filter></defs><rect width="700" height="540" fill="url(#grid)"/><path d="M540 -30 Q420 190 570 320 T540 590" stroke="#d1e4e5" strokeWidth="38" fill="none"/><path d="M-50 420 L750 60" stroke="#fff" strokeWidth="24"/><path d="M-50 420 L750 60" stroke="#e1d8bb" strokeWidth="2" strokeDasharray="8 6"/><rect x="65" y="50" width="120" height="80" rx="26" fill="#d8e2ca" transform="rotate(-14 65 50)"/><rect x="475" y="362" width="148" height="92" rx="25" fill="#d8e2ca" transform="rotate(-14 475 362)"/>{pts.length>1 && <polyline points={pts.map(p=>`${p.x},${p.y}`).join(' ')} fill="none" stroke="#367358" strokeWidth="4" strokeDasharray="8 5" strokeLinejoin="round"/>}{pts.map((p,i)=> i===pts.length-1 && i>0 && places[0].lat===places[i].lat && places[0].lng===places[i].lng ? null : <g key={i} filter="url(#shadow)"><circle cx={p.x} cy={p.y} r={selectedPlace?.id===places[i].id?24:21} fill={selectedPlace?.id===places[i].id?'#d77924':'#27634d'} stroke="white" strokeWidth="4"/><text x={p.x} y={p.y+5} fill="white" textAnchor="middle" fontSize="13" fontWeight="700">{i===0 && places.length>1 && places[0].lat===places.at(-1)!.lat && places[0].lng===places.at(-1)!.lng?'출/도':i===0?'출발':i===places.length-1?'도착':i+1}</text><rect x={Math.min(510,Math.max(10,p.x-65))} y={p.y+23} width="160" height="28" rx="7" fill="white"/><text x={Math.min(510,Math.max(10,p.x-65))+80} y={p.y+42} textAnchor="middle" fontSize="11" fill="#253b32">{places[i].name.slice(0,18)}</text></g>)}</svg><div className="map-disclaimer"><Navigation size={15}/><span>좌표 기반 동선 개념도 · 배경은 실제 지도가 아닙니다</span></div></div>}{error && <p className="error" role="alert">{error}</p>}<div className="map-footer"><i/><span>{!plan?'방문 순서만 표시 · 점선은 실제 이동 경로가 아닙니다':plan.source==='google'?'실제 도로를 따라 계산한 경로':'직선거리 기반 추정'}</span></div></section>;
 }
