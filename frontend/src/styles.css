@@ -48,6 +48,15 @@ select {
     border-radius: 8px;
     padding: 10px 12px;
 }
+select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23657960' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
+}
 input:focus,
 select:focus {
     outline-color: #668c71;
@@ -353,8 +362,8 @@ main {
     flex: 1;
     border: 0;
     font-size: 12px;
-    padding: 10px 15px 10px 4px;
-    background: transparent;
+    padding: 10px 36px 10px 4px;
+    background-color: transparent;
 }
 .endpoint-dot {
     width: 6px;
@@ -1012,6 +1021,9 @@ main {
     width: 100%;
     font-size: 12px;
     padding: 8px;
+}
+.transit-settings select {
+    padding-right: 36px;
 }
 .transit-settings p {
     grid-column: 1/-1;
