@@ -1,34 +1,37 @@
+import { t, locale, translateMessage } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { Footprints, TrainFront } from 'lucide-react';
 import type { Leg } from '../../lib/types';
 import { minutes } from '../../lib/api';
 
 function time(value: string | undefined, zone: string) {
     return value
-        ? new Date(value).toLocaleTimeString('ko-KR', {
+        ? new Date(value).toLocaleTimeString(locale(), {
             timeZone: zone,
             hour: '2-digit',
             minute: '2-digit',
             hour12: false,
         })
-        : '시각 미제공';
+        : t('transit.timeUnavailable');
 }
 
 export function TransitLeg({ leg, timeZone }: { leg: Leg; timeZone: string }) {
+    useTranslation();
     const rides = leg.steps.filter((s) => s.mode === 'TRANSIT');
     return (
         <div className="transit-leg">
             <div className="transit-summary">
                 {
-                    time(leg.departure_time, timeZone)
+                    t('transit.timeRange', {
+                        departure: time(leg.departure_time, timeZone),
+                        arrival: time(leg.arrival_time, timeZone),
+                    })
                 }
-                { ' 출발 → ' }
-                {
-                    time(leg.arrival_time, timeZone)
-                }
-                { ' 도착' }
                 <span>
                     {
-                        rides.length ? `환승 ${leg.transfer_count}회` : '도보만으로 연결'
+                        rides.length
+                            ? t('transit.transfers', { count: leg.transfer_count })
+                            : t('transit.walkOnly')
                     }
                 </span>
             </div>
@@ -66,27 +69,24 @@ export function TransitLeg({ leg, timeZone }: { leg: Leg; timeZone: string }) {
                                         </p>
                                         <p>
                                             {
-                                                time(step.departure_time, timeZone)
-                                            }
-                                            { ' 승차 ·' }
-                                            { " " }
-                                            {
-                                                time(step.arrival_time, timeZone)
-                                            }
-                                            { ' 하차' }
-                                            {
-                                                step.stop_count != null
-                                                    ? ` · ${step.stop_count}개 정류장`
-                                                    : ''
+                                                t(
+                                                    step.stop_count != null
+                                                        ? 'transit.rideWithStops'
+                                                        : 'transit.ride',
+                                                    {
+                                                        departure: time(step.departure_time, timeZone),
+                                                        arrival: time(step.arrival_time, timeZone),
+                                                        count: step.stop_count ?? 0,
+                                                    },
+                                                )
                                             }
                                         </p>
                                         {
                                             step.headsign && (
                                                 <p>
                                                     {
-                                                        step.headsign
+                                                        t('transit.headsign', { destination: step.headsign })
                                                     }
-                                                    { ' 방면' }
                                                 </p>
                                             )
                                         }
@@ -118,20 +118,16 @@ export function TransitLeg({ leg, timeZone }: { leg: Leg; timeZone: string }) {
                                 ) : (
                                     <>
                                         <strong>
-                                            { '도보 ' }
                                             {
-                                                minutes(step.duration_seconds / 60)
+                                                t('transit.walkSummary', {
+                                                    duration: minutes(step.duration_seconds / 60),
+                                                    distance: step.distance_meters,
+                                                })
                                             }
-                                            { ' ·' }
-                                            { " " }
-                                            {
-                                                step.distance_meters
-                                            }
-                                            m
                                         </strong>
                                         <p>
                                             {
-                                                step.instruction || '승하차 지점 또는 다음 장소로 이동'
+                                                step.instruction || t('transit.walkInstruction')
                                             }
                                         </p>
                                     </>
@@ -148,7 +144,7 @@ export function TransitLeg({ leg, timeZone }: { leg: Leg; timeZone: string }) {
                         key={ i }
                     >
                         {
-                            warning
+                            translateMessage(warning)
                         }
                     </p>
                 ))

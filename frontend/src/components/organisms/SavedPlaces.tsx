@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { filterSavedPlaces } from '../../lib/planner';
 import { VisitStatusControl } from '../molecules/VisitStatusControl';
 import { PlaceMapLink } from '../molecules/PlaceMapLink';
@@ -20,7 +22,7 @@ export function SavedPlaces({
     expanded = false,
     numbered = false,
     directionsMode,
-    title = '저장한 장소 관리',
+    title = t('place.saved.title'),
 }: {
     directionsMode?: Mode;
     expanded?: boolean;
@@ -36,6 +38,7 @@ export function SavedPlaces({
     onUpdated: (p: Place) => void;
     onVisitStatus: (p: Place, status: VisitStatus) => void;
 }) {
+    useTranslation();
     const [query, setQuery] = useState('');
     const [filter, setFilter] = useState('all');
     const visiblePlaces = numbered ? places : filterSavedPlaces(places, query, filter);
@@ -60,51 +63,62 @@ export function SavedPlaces({
                     <div className="saved-place-filters">
                         <input
                             type="search"
-                            aria-label="저장 장소 검색"
-                            placeholder="이름·지역·주소 검색"
+                            aria-label={ t('place.saved.searchLabel') }
+                            placeholder={ t('place.saved.searchPlaceholder') }
                             value={ query }
                             onChange={ (e) => setQuery(e.target.value) }
                         />
                         <select
-                            aria-label="저장 장소 필터"
+                            aria-label={ t('place.saved.filterLabel') }
                             value={ filter }
                             onChange={ (e) => setFilter(e.target.value) }
                         >
                             <option value="all">
-                                전체 장소
+                                {
+                                    t('place.saved.all')
+                                }
                             </option>
                             <option value="unscheduled">
-                                날짜 미정
+                                {
+                                    t('place.saved.unscheduled')
+                                }
                             </option>
                             <option value="scheduled">
-                                날짜 지정
+                                {
+                                    t('place.saved.scheduled')
+                                }
                             </option>
                             <option value="pending">
-                                방문 예정
+                                {
+                                    t('place.visitStatus.pending')
+                                }
                             </option>
                             <option value="visited">
-                                방문 완료
+                                {
+                                    t('place.visitStatus.visited')
+                                }
                             </option>
                             <option value="skipped">
-                                건너뜀
+                                {
+                                    t('place.visitStatus.skipped')
+                                }
                             </option>
                         </select>
                         <span>
                             {
-                                visiblePlaces.length
+                                t('place.count', { count: visiblePlaces.length })
                             }
-                            개 장소
                         </span>
                     </div>
                 )
             }
             <div className="saved-place-list">
                 {
-                    visiblePlaces.length === 0 && (
-                        <p className="muted">
-                            조건에 맞는 장소가 없습니다.
-                        </p>
-                    )
+                    visiblePlaces.length === 0 && <p className="muted">
+                        {
+                            t('place.saved.empty')
+                        }
+                    </p>
                 }
                 {
                     visiblePlaces.map((p, i) => (
@@ -117,9 +131,9 @@ export function SavedPlaces({
                                                 <span className="order-badge">
                                                     {
                                                         i === 0
-                                                            ? '출발'
+                                                            ? t('route.label.start')
                                                             : i === places.length - 1
-                                                                ? '도착'
+                                                                ? t('route.label.arrival')
                                                                 : `STEP ${String(i).padStart(2, '0')}`
                                                     }
                                                 </span>
@@ -141,8 +155,10 @@ export function SavedPlaces({
                                             type="button"
                                             disabled={ busy }
                                             onClick={ () => onEdit(p) }
-                                            aria-label={ `${p.name} 수정` }
-                                            title="수정"
+                                            aria-label={ t('common.accessibility.edit', {
+                                                name: p.name,
+                                            }) }
+                                            title={ t('common.button.edit') }
                                         >
                                             <Pencil size={ 15 } />
                                         </button>
@@ -152,8 +168,10 @@ export function SavedPlaces({
                                             className="delete"
                                             disabled={ busy }
                                             onClick={ () => onDelete(p) }
-                                            aria-label={ `${p.name} 삭제` }
-                                            title="삭제"
+                                            aria-label={ t('common.accessibility.delete', {
+                                                name: p.name,
+                                            }) }
+                                            title={ t('common.button.delete') }
                                         >
                                             <Trash2 size={ 15 } />
                                         </button>
@@ -167,16 +185,14 @@ export function SavedPlaces({
                                 <div className="saved-place-meta">
                                     <span>
                                         {
-                                            minutes(p.stay_minutes)
+                                            t('place.stayDuration', { duration: minutes(p.stay_minutes) })
                                         }
-                                        { ' 머무르기' }
                                     </span>
                                     {
                                         p.required_time && (
                                             <span>
-                                                { '필수 ' }
                                                 {
-                                                    p.required_time
+                                                    t('schedule.requiredTime', { time: p.required_time })
                                                 }
                                             </span>
                                         )
@@ -184,21 +200,23 @@ export function SavedPlaces({
                                     {
                                         p.required_order && (
                                             <span>
-                                                { 'STEP ' }
                                                 {
-                                                    String(p.required_order).padStart(2, '0')
+                                                    t('place.fixedStep', {
+                                                        step: String(p.required_order).padStart(2, '0'),
+                                                    })
                                                 }
-                                                { ' 고정' }
                                             </span>
                                         )
                                     }
                                 </div>
                                 <label className="saved-place-date">
                                     <span>
-                                        방문 날짜
+                                        {
+                                            t('place.form.visitDate')
+                                        }
                                     </span>
                                     <input
-                                        aria-label={ `${p.name} 방문 날짜` }
+                                        aria-label={ t('place.visitDateLabel', { name: p.name }) }
                                         type="date"
                                         value={ p.visit_date ?? '' }
                                         disabled={ busy }

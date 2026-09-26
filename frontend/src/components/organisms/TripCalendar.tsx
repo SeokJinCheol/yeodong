@@ -1,3 +1,5 @@
+import { t, locale } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import type { Place } from '../../lib/types';
 import { localDate } from '../../lib/api';
@@ -12,6 +14,7 @@ export function TripCalendar({
     onClose: () => void;
     onSelect: (date: string) => void;
 }) {
+    useTranslation();
     const [month, setMonth] = useState(() => (date || localDate()).slice(0, 7));
     const [year, m] = month.split('-').map(Number);
     const count: Record<string, number> = {};
@@ -27,40 +30,42 @@ export function TripCalendar({
     return (
         <section
             className="trip-calendar"
-            aria-label="여행 일정 달력"
+            aria-label={ t('calendar.title') }
         >
             <div className="calendar-topline">
                 <span>
-                    여행 일정 달력
+                    {
+                        t('calendar.title')
+                    }
                 </span>
                 <button
                     type="button"
                     className="calendar-collapse"
                     onClick={ onClose }
-                    aria-label="달력 접기"
+                    aria-label={ t('calendar.collapseLabel') }
                 >
-                    접기 ⌃
+                    {
+                        t('calendar.collapse')
+                    }
                 </button>
             </div>
             <header>
                 <button
-                    aria-label="이전 달"
+                    aria-label={ t('calendar.previousMonth') }
                     onClick={ () => move(-1) }
                 >
                     ‹
                 </button>
                 <strong>
                     {
-                        year
+                        new Date(year, m - 1, 1).toLocaleDateString(locale(), {
+                            year: 'numeric',
+                            month: 'long',
+                        })
                     }
-                    { '년 ' }
-                    {
-                        m
-                    }
-                    월
                 </strong>
                 <button
-                    aria-label="다음 달"
+                    aria-label={ t('calendar.nextMonth') }
                     onClick={ () => move(1) }
                 >
                     ›
@@ -68,7 +73,15 @@ export function TripCalendar({
             </header>
             <div className="calendar-grid">
                 {
-                    ['일', '월', '화', '수', '목', '금', '토'].map((d) => (
+                    [
+                        t('calendar.weekday.sunday'),
+                        t('calendar.weekday.monday'),
+                        t('calendar.weekday.tuesday'),
+                        t('calendar.weekday.wednesday'),
+                        t('calendar.weekday.thursday'),
+                        t('calendar.weekday.friday'),
+                        t('calendar.weekday.saturday'),
+                    ].map((d) => (
                         <span
                             className="weekday"
                             key={ d }
@@ -92,7 +105,10 @@ export function TripCalendar({
                                 key={ value }
                                 className={ `calendar-day ${date === value ? 'selected' : ''} ${value === localDate() ? 'today' : ''}` }
                                 aria-pressed={ date === value }
-                                aria-label={ `${value}, ${count[value] ?? 0}개 장소 방문 예정` }
+                                aria-label={ t('calendar.dayLabel', {
+                                    date: value,
+                                    count: count[value] ?? 0,
+                                }) }
                                 onClick={ () => onSelect(value) }
                             >
                                 <span>
@@ -104,12 +120,13 @@ export function TripCalendar({
                                     }
                                 </span>
                                 {
-                                    count[value] > 0 && <small>
-                                        {
-                                            count[value]
-                                        }
-                                        개 장소 방문 예정
-                                    </small>
+                                    count[value] > 0 && (
+                                        <small>
+                                            {
+                                                t('calendar.plannedStops', { count: count[value] })
+                                            }
+                                        </small>
+                                    )
                                 }
                             </button>
                         );
@@ -117,7 +134,9 @@ export function TripCalendar({
                 }
             </div>
             <p>
-                점이 있는 날짜에는 저장된 일정이 있습니다. 날짜를 누르면 해당 일정이 열립니다.
+                {
+                    t('calendar.hint')
+                }
             </p>
         </section>
     );

@@ -1,15 +1,20 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import type { Place } from '../../lib/types';
 
 export function TransitFallback({ places }: { places: Place[] }) {
+    useTranslation();
     return (
         <section className="transit-fallback">
             <h3>
-                Google 지도에서 교통편 확인
+                {
+                    t('transit.fallback.title')
+                }
             </h3>
             <p>
-                Valhalla 대중교통 동선 최적화는 지원하지 않습니다. 아래 구간은 필수 순서를 먼저
-                반영한 목록이며 최적화된 코스가 아닙니다. 출발 날짜·시각은 Google 지도에서 다시
-                설정하세요.
+                {
+                    t('transit.fallback.description')
+                }
             </p>
             {
                 places.slice(0, -1).map((place, i) => {
@@ -37,7 +42,9 @@ export function TransitFallback({ places }: { places: Place[] }) {
                                 next.name
                             }
                             <span>
-                                대중교통 찾기 ↗
+                                {
+                                    t('transit.button.find')
+                                }
                             </span>
                         </a>
                     );

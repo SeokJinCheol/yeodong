@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import type { Place } from '../../lib/types';
 import { PlaceMapLink } from '../molecules/PlaceMapLink';
@@ -28,6 +30,7 @@ export function ItineraryProgress({
     remainingOnly: boolean;
     canCalculate: boolean;
 }) {
+    useTranslation();
     const [dragged, setDragged] = useState<number>();
     const unique = [...new Map(places.map((p) => [p.id, p])).values()];
     const next = unique.find((p) => p.id !== start && (p.visit_status ?? 'pending') === 'pending');
@@ -42,34 +45,29 @@ export function ItineraryProgress({
     return (
         <section
             className="itinerary-progress"
-            aria-label="여행 진행 상황"
+            aria-label={ t('itinerary.progress.label') }
         >
             <div className="progress-top">
                 <span>
-                    { '방문 완료 ' }
                     {
-                        completed
-                    }
-                    { ' / ' }
-                    {
-                        unique.length
+                        t('itinerary.progress.completed', { completed, total: unique.length })
                     }
                 </span>
                 {
                     next ? (
                         <span>
-                            { '다음: ' }
                             <strong>
                                 {
-                                    next.name
+                                    t('itinerary.progress.next', { name: next.name })
                                 }
                             </strong>
-                            { " " }
                             <PlaceMapLink place={ next } />
                         </span>
                     ) : (
                         <span>
-                            남은 방문지가 없습니다.
+                            {
+                                t('itinerary.progress.finished')
+                            }
                         </span>
                     )
                 }
@@ -80,7 +78,9 @@ export function ItineraryProgress({
                     disabled={ busy || !canCalculate }
                     onClick={ onRemaining }
                 >
-                    남은 장소로 재계산
+                    {
+                        t('route.button.recalculateRemaining')
+                    }
                 </Button>
                 {
                     remainingOnly && (
@@ -89,22 +89,28 @@ export function ItineraryProgress({
                             disabled={ busy }
                             onClick={ onAll }
                         >
-                            전체 동선 보기
+                            {
+                                t('route.button.showAll')
+                            }
                         </Button>
                     )
                 }
             </div>
             <details className="step-order-editor">
                 <summary>
-                    STEP 순서 편집 ·
-                    { ' ' }
                     {
-                        orderMode === 'manual' ? '수동 순서 유지' : '자동 최적화 / 필수 순서 반영'
+                        t('itinerary.order.summary', {
+                            mode:
+                                orderMode === 'manual'
+                                    ? t('itinerary.order.manual')
+                                    : t('itinerary.order.automatic'),
+                        })
                     }
                 </summary>
                 <p className="small muted">
-                    위·아래 버튼 또는 드래그로 중간 방문 순서를 고정합니다. 출발·도착지는 일정
-                    설정에서 변경하세요.
+                    {
+                        t('itinerary.order.description')
+                    }
                 </p>
                 <ol>
                     {
@@ -136,14 +142,16 @@ export function ItineraryProgress({
                                     }
                                 </span>
                                 <button
-                                    aria-label={ `${place.name} 위로` }
+                                    aria-label={ t('common.accessibility.moveUp', { name: place.name }) }
                                     disabled={ busy || index === 0 }
                                     onClick={ () => move(index, index - 1) }
                                 >
                                     ↑
                                 </button>
                                 <button
-                                    aria-label={ `${place.name} 아래로` }
+                                    aria-label={ t('common.accessibility.moveDown', {
+                                        name: place.name,
+                                    }) }
                                     disabled={ busy || index === middle.length - 1 }
                                     onClick={ () => move(index, index + 1) }
                                 >
@@ -163,7 +171,9 @@ export function ItineraryProgress({
                         )
                     }
                 >
-                    고정 순서 해제 · 자동 최적화
+                    {
+                        t('itinerary.order.reset')
+                    }
                 </Button>
             </details>
         </section>

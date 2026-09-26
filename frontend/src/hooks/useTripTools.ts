@@ -1,8 +1,11 @@
+import { t } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { activeTripId, api, json, switchTrip } from '../lib/api';
 import type { Trip } from '../lib/types';
 
 export function useTripTools(runMutation: (action: () => Promise<unknown>) => Promise<void>) {
+    useTranslation();
     const [trips, setTrips] = useState<Trip[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -49,16 +52,15 @@ export function useTripTools(runMutation: (action: () => Promise<unknown>) => Pr
     }
     async function importFile(file: File) {
         await execute(async () => {
-            if (file.size > 2_000_000)
-                throw new Error('백업 파일은 2MB 이하만 가져올 수 있습니다.');
+            if (file.size > 2_000_000) throw new Error(t('backup.error.tooLarge'));
             let payload;
             try {
                 payload = JSON.parse(await file.text());
             } catch {
-                throw new Error('올바른 JSON 백업 파일을 선택해 주세요.');
+                throw new Error(t('backup.error.invalidJson'));
             }
             await runMutation(() => api('/backup/import', json('POST', payload)));
-            setSuccess('백업을 가져왔습니다. 상단 날짜 탭에서 일정을 선택하세요.');
+            setSuccess(t('backup.imported'));
         });
     }
     return { trips, error, success, busy, saveTrip, download, importFile };

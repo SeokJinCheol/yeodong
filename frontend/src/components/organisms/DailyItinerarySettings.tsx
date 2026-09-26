@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 
@@ -8,6 +10,7 @@ export function DailyItinerarySettings({
     dateLabel: string;
     children: ReactNode;
 }) {
+    useTranslation();
     const [expanded, setExpanded] = useState(false);
     return (
         <section className={ `daily-settings ${expanded ? 'expanded' : ''}` }>
@@ -30,7 +33,7 @@ export function DailyItinerarySettings({
                     onClick={ () => setExpanded(!expanded) }
                 >
                     {
-                        expanded ? '설정 접기' : '일정 설정'
+                        expanded ? t('itinerary.settings.hide') : t('itinerary.settings.title')
                     }
                     <ChevronDown size={ 16 } />
                 </button>

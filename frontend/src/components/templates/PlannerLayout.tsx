@@ -1,6 +1,10 @@
+import { LanguageSelect } from '../molecules/LanguageSelect';
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
 import { Compass, Route } from 'lucide-react';
 export function PlannerLayout({ children }: { children: ReactNode }) {
+    useTranslation();
     return (
         <>
             <header className="app-header">
@@ -11,18 +15,27 @@ export function PlannerLayout({ children }: { children: ReactNode }) {
                     <span>
                         <Route size={ 23 } />
                     </span>
-                    여동
+                    {
+                        t('brand.name')
+                    }
                     <span className="brand-sub">
-                        여행의 동선을 잇다
+                        {
+                            t('brand.tagline')
+                        }
                     </span>
                 </a>
                 <div className="header-right">
+                    <LanguageSelect />
                     <span className="header-active">
                         <Compass size={ 16 } />
-                        여행 플래너
+                        {
+                            t('brand.planner')
+                        }
                     </span>
                     <span className="avatar">
-                        여
+                        {
+                            t('brand.avatar')
+                        }
                     </span>
                 </div>
             </header>
@@ -33,7 +46,9 @@ export function PlannerLayout({ children }: { children: ReactNode }) {
             </main>
             <footer className="app-footer">
                 <span>
-                    여동 · 더 적게 헤매고, 더 많이 여행하세요.
+                    {
+                        t('brand.footer')
+                    }
                 </span>
                 <span>
                     TRAVEL AT YOUR OWN PACE

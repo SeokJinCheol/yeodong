@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '../atoms/Button';
@@ -26,19 +28,20 @@ export function RouteSectionManager({
     onSave,
     onDelete,
 }: Props) {
+    useTranslation();
     const [sectionName, setSectionName] = useState('');
     const [managementOpen, setManagementOpen] = useState(false);
     const [sectionAction, setSectionAction] = useState<'add' | 'rename' | 'delete' | null>(null);
     return (
         <section
             className={ `route-sections ${managementOpen ? 'management-open' : ''}` }
-            aria-label="날짜별 동선 구간"
+            aria-label={ t('section.dailyLabel') }
         >
             <div className="section-toolbar">
                 <div
                     className="section-tabs"
                     role="tablist"
-                    aria-label="동선 구간"
+                    aria-label={ t('section.label') }
                 >
                     {
                         [{ id: null, name: defaultSectionName }, ...daySections].map((section) => (
@@ -99,7 +102,7 @@ export function RouteSectionManager({
                 <button
                     type="button"
                     className="section-management-toggle"
-                    aria-label="구간 관리"
+                    aria-label={ t('section.manageLabel') }
                     aria-expanded={ managementOpen }
                     onClick={ () => {
                         setManagementOpen(!managementOpen);
@@ -107,7 +110,7 @@ export function RouteSectionManager({
                     } }
                 >
                     {
-                        managementOpen ? '접기' : '관리'
+                        managementOpen ? t('common.button.collapse') : t('common.button.manage')
                     }
                 </button>
                 <div className="section-actions section-management-actions">
@@ -120,7 +123,9 @@ export function RouteSectionManager({
                         } }
                     >
                         <Plus size={ 15 } />
-                        구간 추가
+                        {
+                            t('section.button.add')
+                        }
                     </Button>
                     <button
                         type="button"
@@ -135,7 +140,9 @@ export function RouteSectionManager({
                             setSectionAction('rename');
                         } }
                     >
-                        이름 변경
+                        {
+                            t('common.button.rename')
+                        }
                     </button>
                     {
                         sectionId !== null && (
@@ -145,7 +152,9 @@ export function RouteSectionManager({
                                 disabled={ mutating }
                                 onClick={ () => setSectionAction('delete') }
                             >
-                                구간 삭제
+                                {
+                                    t('section.button.delete')
+                                }
                             </button>
                         )
                     }
@@ -166,14 +175,16 @@ export function RouteSectionManager({
                         } }
                     >
                         <label htmlFor="section-name">
-                            구간 이름
+                            {
+                                t('section.name')
+                            }
                         </label>
                         <input
                             id="section-name"
                             disabled={ mutating }
                             autoFocus
-                            aria-label="구간 이름"
-                            placeholder="예: 오전, 오후, 저녁"
+                            aria-label={ t('section.name') }
+                            placeholder={ t('section.namePlaceholder') }
                             required
                             maxLength={ 40 }
                             value={ sectionName }
@@ -181,7 +192,7 @@ export function RouteSectionManager({
                         />
                         <Button disabled={ mutating || !sectionName.trim() }>
                             {
-                                sectionAction === 'add' ? '추가' : '저장'
+                                sectionAction === 'add' ? t('common.button.add') : t('common.button.save')
                             }
                         </Button>
                         <button
@@ -189,7 +200,9 @@ export function RouteSectionManager({
                             className="text-button"
                             onClick={ () => setSectionAction(null) }
                         >
-                            취소
+                            {
+                                t('common.button.cancel')
+                            }
                         </button>
                     </form>
                 )
@@ -198,20 +211,13 @@ export function RouteSectionManager({
                 sectionAction === 'delete' && sectionId !== null && (
                     <div className="section-delete-confirm">
                         <p>
-                            <strong>
-                                {
-                                    daySections.find((s) => s.id === sectionId)?.name
-                                }
-                            </strong>
-                            { ' 구간을 삭제할까요? 등록한 장소 ' }
                             {
-                                placeCount
+                                t('section.deleteDescription', {
+                                    name: daySections.find((s) => s.id === sectionId)?.name,
+                                    count: placeCount,
+                                    target: defaultSectionName,
+                                })
                             }
-                            개는 삭제하지 않고 같은 날짜의 ‘
-                            {
-                                defaultSectionName
-                            }
-                            ’ 구간으로 옮깁니다.
                         </p>
                         <div className="section-actions">
                             <Button
@@ -227,7 +233,7 @@ export function RouteSectionManager({
                                 } }
                             >
                                 {
-                                    mutating ? '처리 중…' : '구간 삭제'
+                                    mutating ? t('common.status.working') : t('section.button.delete')
                                 }
                             </Button>
                             <button
@@ -236,15 +242,18 @@ export function RouteSectionManager({
                                 disabled={ mutating }
                                 onClick={ () => setSectionAction(null) }
                             >
-                                취소
+                                {
+                                    t('common.button.cancel')
+                                }
                             </button>
                         </div>
                     </div>
                 )
             }
             <p className="small muted">
-                구간마다 방문 장소와 출발·도착지, 동선을 따로 관리합니다. 장소 수정에서 구간을 옮길
-                수 있어요.
+                {
+                    t('section.description')
+                }
             </p>
         </section>
     );

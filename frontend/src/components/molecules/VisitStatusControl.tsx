@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import type { Place, VisitStatus } from '../../lib/types';
 
@@ -10,6 +12,7 @@ export function VisitStatusControl({
     busy: boolean;
     onChange: (place: Place, status: VisitStatus) => void;
 }) {
+    useTranslation();
     const [expanded, setExpanded] = useState(false);
     const status = place.visit_status ?? 'pending';
     return (
@@ -18,7 +21,7 @@ export function VisitStatusControl({
             data-status={ status }
         >
             <select
-                aria-label={ `${place.name} 방문 상태` }
+                aria-label={ t('place.visitStatus.label', { name: place.name }) }
                 value={ status }
                 disabled={ busy }
                 onChange={ (e) => {
@@ -27,13 +30,19 @@ export function VisitStatusControl({
                 } }
             >
                 <option value="pending">
-                    방문 예정
+                    {
+                        t('place.visitStatus.pending')
+                    }
                 </option>
                 <option value="visited">
-                    방문 완료
+                    {
+                        t('place.visitStatus.visited')
+                    }
                 </option>
                 <option value="skipped">
-                    건너뛰기
+                    {
+                        t('place.visitStatus.skip')
+                    }
                 </option>
             </select>
             {
@@ -45,7 +54,7 @@ export function VisitStatusControl({
                         onClick={ () => setExpanded(!expanded) }
                     >
                         {
-                            expanded ? '상세 접기' : '상세 보기'
+                            expanded ? t('common.button.hideDetails') : t('common.button.showDetails')
                         }
                     </button>
                 )

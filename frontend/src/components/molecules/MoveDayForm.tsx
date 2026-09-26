@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Button } from '../atoms/Button';
 export function MoveDayForm({
@@ -11,11 +13,14 @@ export function MoveDayForm({
     busy: boolean;
     onMove: (target: string) => Promise<void>;
 }) {
+    useTranslation();
     const [target, setTarget] = useState('');
     return (
         <details className="move-day">
             <summary>
-                일정 날짜 변경
+                {
+                    t('itinerary.move.title')
+                }
             </summary>
             <form
                 onSubmit={ async (e) => {
@@ -25,19 +30,15 @@ export function MoveDayForm({
             >
                 <p>
                     {
-                        date
+                        t('itinerary.move.description', { date, count })
                     }
-                    { '의 모든 구간과 장소 ' }
-                    {
-                        count
-                    }
-                    개를 함께 옮깁니다. 머무르기 시간과 필수 도착 시각은 유지됩니다. 이미 일정이
-                    있는 날짜로는 옮길 수 없습니다.
                 </p>
                 <label>
-                    변경할 날짜
+                    {
+                        t('itinerary.move.dateLabel')
+                    }
                     <input
-                        aria-label="일정 변경할 날짜"
+                        aria-label={ t('itinerary.move.dateAriaLabel') }
                         type="date"
                         required
                         value={ target }
@@ -48,7 +49,9 @@ export function MoveDayForm({
                     variant="secondary"
                     disabled={ busy || !count || !target || target === date }
                 >
-                    일정 옮기기
+                    {
+                        t('itinerary.move.button')
+                    }
                 </Button>
             </form>
         </details>

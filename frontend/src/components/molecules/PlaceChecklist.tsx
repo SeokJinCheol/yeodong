@@ -1,3 +1,5 @@
+import { t, translateMessage } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import type { Place } from '../../lib/types';
 import { api, json } from '../../lib/api';
@@ -8,6 +10,7 @@ export function PlaceChecklist({
     place: Place;
     onUpdated: (place: Place) => void;
 }) {
+    useTranslation();
     const [busy, setBusy] = useState(false),
         [error, setError] = useState('');
     const tasks = place.tasks ?? [];
@@ -25,15 +28,12 @@ export function PlaceChecklist({
                 tasks.length > 0 && (
                     <>
                         <strong>
-                            { '할 일 · ' }
                             {
-                                tasks.filter((t) => t.done).length
+                                t('place.checklist.progress', {
+                                    completed: tasks.filter((task) => task.done).length,
+                                    total: tasks.length,
+                                })
                             }
-                            /
-                            {
-                                tasks.length
-                            }
-                            { ' 완료' }
                         </strong>
                         {
                             tasks.map((task) => (
@@ -77,7 +77,7 @@ export function PlaceChecklist({
                         className="error"
                     >
                         {
-                            error
+                            translateMessage(error)
                         }
                     </p>
                 )

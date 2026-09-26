@@ -1,5 +1,8 @@
 import { AccountPanel } from '../components/organisms/AccountPanel';
 import { TripTools } from '../components/organisms/TripTools';
+import { PlannerLayout } from '../components/templates/PlannerLayout';
+import { t, locale, translateMessage } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { ItineraryProgress } from '../components/organisms/ItineraryProgress';
 import { useEffect, useRef, useState } from 'react';
 import { CalendarDays, MapPin, Plus, RefreshCw, Route, Sparkles } from 'lucide-react';
@@ -17,7 +20,6 @@ import { RouteOverview } from '../components/organisms/RouteOverview';
 import { CourseList } from '../components/organisms/CourseList';
 import { SavedPlaces } from '../components/organisms/SavedPlaces';
 import { TripCalendar } from '../components/organisms/TripCalendar';
-import { PlannerLayout } from '../components/templates/PlannerLayout';
 
 import { usePlannerData } from '../hooks/usePlannerData';
 import { useRoutePlan } from '../hooks/useRoutePlan';
@@ -28,6 +30,7 @@ import { RouteSectionManager } from '../components/organisms/RouteSectionManager
 import { RouteSettings } from '../components/organisms/RouteSettings';
 
 export function PlannerPage() {
+    useTranslation();
     const data = usePlannerData();
     const {
         allPlaces,
@@ -198,8 +201,8 @@ export function PlannerPage() {
         });
     }
     const dateLabel = !date
-        ? '여행 날짜를 선택해 주세요'
-        : new Date(`${date}T12:00:00`).toLocaleDateString('ko-KR', {
+        ? t('itinerary.selectDate')
+        : new Date(`${date}T12:00:00`).toLocaleDateString(locale(), {
             month: 'long',
             day: 'numeric',
             weekday: 'short',
@@ -219,7 +222,9 @@ export function PlannerPage() {
                         role="status"
                         className="settings-saving"
                     >
-                        설정 저장 중…
+                        {
+                            t('common.status.saving')
+                        }
                     </p>
                 )
             }
@@ -231,9 +236,8 @@ export function PlannerPage() {
                     >
                         <span>
                             {
-                                data.undo.label
+                                t('itinerary.deleted', { name: data.undo.label })
                             }
-                            { ' 삭제됨' }
                         </span>
                         <button
                             disabled={ mutating }
@@ -241,10 +245,12 @@ export function PlannerPage() {
                                 void data.restoreTrash(data.undo!.id).catch((e) => setError(e.message))
                             }
                         >
-                            실행 취소
+                            {
+                                t('common.button.undo')
+                            }
                         </button>
                         <button
-                            aria-label="삭제 알림 닫기"
+                            aria-label={ t('itinerary.dismissDeleted') }
                             onClick={ () => data.setUndo(undefined) }
                         >
                             ×
@@ -258,22 +264,28 @@ export function PlannerPage() {
                         YOUR NEXT LITTLE ADVENTURE
                     </span>
                     <h1>
-                        가고 싶은 곳을 모으면,
+                        {
+                            t('planner.intro.firstLine')
+                        }
                         <br />
-                        여행이 이어집니다
+                        {
+                            t('planner.intro.secondLine')
+                        }
                         <span>
                             .
                         </span>
                     </h1>
                     <p>
-                        장소 사이의 고민은 줄이고, 당신만의 여행을 시작하세요.
+                        {
+                            t('planner.intro.description')
+                        }
                     </p>
                 </div>
                 <div className="intro-actions">
                     <Badge>
                         <span className={ `status-dot ${live ? 'live' : ''}` } />
                         {
-                            live ? 'Valhalla 경로 사용' : 'Valhalla 서버 설정 필요'
+                            live ? t('route.status.enabled') : t('route.status.setupRequired')
                         }
                     </Badge>
                 </div>
@@ -286,7 +298,7 @@ export function PlannerPage() {
                     <div
                         className="date-tabs"
                         ref={ dateTabsRef }
-                        aria-label="여행 날짜"
+                        aria-label={ t('itinerary.dateLabel') }
                     >
                         {
                             dates.map((d, i) => (
@@ -303,7 +315,7 @@ export function PlannerPage() {
                                         }
                                     </span>
                                     {
-                                        new Date(`${d}T12:00:00`).toLocaleDateString('ko-KR', {
+                                        new Date(`${d}T12:00:00`).toLocaleDateString(locale(), {
                                             month: 'numeric',
                                             day: 'numeric',
                                         })
@@ -315,17 +327,19 @@ export function PlannerPage() {
                     <button
                         type="button"
                         className="mobile-date-toggle"
-                        aria-label="다른 날짜 선택"
+                        aria-label={ t('calendar.selectOtherDate') }
                         aria-expanded={ calendarOpen }
                         onClick={ () => setCalendarOpen((open) => !open) }
                     >
                         <CalendarDays size={ 18 } />
-                        날짜
+                        {
+                            t('common.label.date')
+                        }
                     </button>
                     <label className="date-picker">
                         <CalendarDays size={ 16 } />
                         <input
-                            aria-label="계획할 날짜"
+                            aria-label={ t('itinerary.planDate') }
                             type="date"
                             value={ date }
                             onChange={ (e) => {
@@ -375,10 +389,14 @@ export function PlannerPage() {
                         <div className="date-empty">
                             <CalendarDays size={ 26 } />
                             <h2>
-                                여행 날짜를 먼저 지정해 주세요
+                                {
+                                    t('itinerary.noDate.title')
+                                }
                             </h2>
                             <p>
-                                달력에서 날짜를 선택한 뒤 장소를 추가하세요.
+                                {
+                                    t('itinerary.noDate.description')
+                                }
                             </p>
                         </div>
                     )
@@ -395,12 +413,9 @@ export function PlannerPage() {
                                 {
                                     invalidOrder && (
                                         <p className="mode-unavailable-note">
-                                            { '중간 방문지는 ' }
                                             {
-                                                middleCount
+                                                t('itinerary.order.outOfRange', { count: middleCount })
                                             }
-                                            곳인데 그보다 큰 필수 STEP 번호가 있습니다. 순서 보기에서는 등록
-                                            순서로 배치합니다. 장소 수정에서 STEP 번호를 조정해 주세요.
                                         </p>
                                     )
                                 }
@@ -445,18 +460,26 @@ export function PlannerPage() {
                                             <Sparkles size={ 14 } />
                                             {
                                                 orderOnly
-                                                    ? 'Map · 등록한 방문 순서'
+                                                    ? t('route.status.mapOrder')
                                                     : busy
-                                                        ? '가장 짧은 순서를 찾고 있어요'
+                                                        ? t('route.status.optimizing')
                                                         : plan
-                                                            ? `${Math.max(0, plan.places.length - 2)}개 방문지 · ${mode === 'TRANSIT' ? '출발 시각 기준 추천 순서' : plan.schedule_feasible ? '시간 조건 반영 순서' : '시간 조건 미충족'}`
-                                                            : '장소를 등록해 여행을 시작하세요'
+                                                            ? t('route.status.summary', {
+                                                                count: Math.max(0, plan.places.length - 2),
+                                                                description:
+                                                                    mode === 'TRANSIT'
+                                                                        ? t('route.order.departureBased')
+                                                                        : plan.schedule_feasible
+                                                                            ? t('route.order.feasible')
+                                                                            : t('route.order.infeasible'),
+                                                            })
+                                                            : t('route.empty.startHint')
                                             }
                                         </span>
                                         <button
                                             disabled={ busy || orderOnly }
                                             onClick={ recalculate }
-                                            aria-label="동선 다시 계산"
+                                            aria-label={ t('route.button.recalculate') }
                                         >
                                             <RefreshCw
                                                 size={ 14 }
@@ -468,16 +491,19 @@ export function PlannerPage() {
                                         plan?.saved_at && (
                                             <p className="saved-route-note">
                                                 {
-                                                    plan.cache_hit ? '저장된 동선' : '계산 후 저장된 동선'
+                                                    plan.cache_hit
+                                                        ? t('route.cache.saved')
+                                                        : t('route.cache.calculated')
                                                 }
                                                 { ' ·' }
                                                 { " " }
                                                 {
-                                                    new Date(plan.saved_at).toLocaleString('ko-KR')
+                                                    new Date(plan.saved_at).toLocaleString(locale())
                                                 }
                                                 <br />
-                                                24시간 동안 같은 일정을 재사용합니다. 최신 경로는 다시
-                                                계산을 눌러 확인하세요.
+                                                {
+                                                    t('route.cache.hint')
+                                                }
                                             </p>
                                         )
                                     }
@@ -489,7 +515,7 @@ export function PlannerPage() {
                                             className="error"
                                         >
                                             {
-                                                error
+                                                translateMessage(error)
                                             }
                                             <button
                                                 className="text-button"
@@ -499,7 +525,9 @@ export function PlannerPage() {
                                                         .catch((e) => setError(e.message))
                                                 }
                                             >
-                                                다시 시도
+                                                {
+                                                    t('common.button.retry')
+                                                }
                                             </button>
                                         </div>
                                     )
@@ -511,20 +539,23 @@ export function PlannerPage() {
                                             role="alert"
                                         >
                                             <strong>
-                                                필수 시각을 지킬 수 없는 일정입니다
+                                                {
+                                                    t('schedule.infeasible.title')
+                                                }
                                             </strong>
                                             {
                                                 plan.schedule_conflicts.map((message, i) => (
                                                     <p key={ i }>
                                                         {
-                                                            message
+                                                            translateMessage(message)
                                                         }
                                                     </p>
                                                 ))
                                             }
                                             <p>
-                                                출발 시각·머무르기 시간·방문 장소를 수정해 주세요. 표시된
-                                                경로는 조건 미충족 경로입니다.
+                                                {
+                                                    t('schedule.infeasible.description')
+                                                }
                                             </p>
                                         </div>
                                     )
@@ -533,18 +564,19 @@ export function PlannerPage() {
                                     mode === 'TRANSIT' && plan && (
                                         <p className="transit-note">
                                             {
-                                                plan.optimization
+                                                t('transit.scheduleNotice', {
+                                                    optimization: plan.optimization,
+                                                })
                                             }
-                                            . 도보·대기·환승을 포함한 이동시간이며, 운행
-                                            일정은 변경될 수 있습니다.
                                         </p>
                                     )
                                 }
                                 {
                                     mode === 'TRANSIT' && error && (
                                         <p className="transit-note">
-                                            각 STEP 사이의 Google 길찾기에서 교통편을 확인하세요. 출발
-                                            날짜·시각은 Google 지도에서 설정해 주세요.
+                                            {
+                                                t('transit.fallback.googleHint')
+                                            }
                                         </p>
                                     )
                                 }
@@ -572,7 +604,9 @@ export function PlannerPage() {
                                         <div className="empty loading">
                                             <Route size={ 28 } />
                                             <p>
-                                                여행 동선을 계산하고 있어요…
+                                                {
+                                                    t('route.status.calculating')
+                                                }
                                             </p>
                                         </div>
                                     ) : plan ? (
@@ -593,16 +627,16 @@ export function PlannerPage() {
                                                 expanded
                                                 numbered
                                                 directionsMode={ mode }
-                                                title="방문 순서"
+                                                title={ t('route.stopOrder') }
                                                 places={ fallbackPlaces }
                                                 selectedId={ selectedPlaceId }
                                                 busy={ mutating }
                                                 { ...placeActions }
                                             />
                                             <p className="mode-unavailable-note">
-                                                장소는 저장되었습니다. 아래 순서와 지도 마커로 일정을
-                                                확인하세요. 이동시간과 필수 시각 준수 여부는 계산하지
-                                                않습니다.
+                                                {
+                                                    t('route.orderOnlyHint')
+                                                }
                                             </p>
                                         </>
                                     ) : (
@@ -610,9 +644,7 @@ export function PlannerPage() {
                                             <MapPin size={ 26 } />
                                             <p>
                                                 {
-                                                    loaded
-                                                        ? '이 날짜에 갈 장소를 추가하거나 출발·도착지를 선택하세요.'
-                                                        : '여행 정보를 불러오는 중입니다.'
+                                                    loaded ? t('route.empty.addPlaces') : t('trip.loading')
                                                 }
                                             </p>
                                         </div>
@@ -624,7 +656,9 @@ export function PlannerPage() {
                                     onClick={ () => openPlaceForm() }
                                 >
                                     <Plus size={ 16 } />
-                                    이 구간에 장소 추가
+                                    {
+                                        t('section.button.addPlace')
+                                    }
                                 </Button>
                                 <SavedPlaces
                                     places={ orderedPlacesFor(allPlaces, date, plan) }
@@ -660,7 +694,7 @@ export function PlannerPage() {
                 !showForm && (
                     <nav
                         className="floating-actions"
-                        aria-label="여행 빠른 메뉴"
+                        aria-label={ t('planner.shortcuts.label') }
                     >
                         {
                             date && (
@@ -669,7 +703,9 @@ export function PlannerPage() {
                                     onClick={ () => jumpTo(mobileView === 'steps' ? 'map' : 'steps') }
                                 >
                                     {
-                                        mobileView === 'steps' ? '지도 보기' : 'STEP 보기'
+                                        mobileView === 'steps'
+                                            ? t('planner.shortcuts.map')
+                                            : t('planner.shortcuts.steps')
                                     }
                                 </button>
                             )
@@ -677,25 +713,29 @@ export function PlannerPage() {
                         <button
                             type="button"
                             className="floating-action calendar"
-                            title="달력 보기"
-                            aria-label="달력 보기"
+                            title={ t('planner.shortcuts.calendar') }
+                            aria-label={ t('planner.shortcuts.calendar') }
                             onClick={ openCalendar }
                         >
                             <CalendarDays size={ 21 } />
                             <span>
-                                달력 보기
+                                {
+                                    t('planner.shortcuts.calendar')
+                                }
                             </span>
                         </button>
                         <button
                             type="button"
                             className="floating-action add"
-                            title="일정 추가"
-                            aria-label="일정 추가"
+                            title={ t('planner.shortcuts.add') }
+                            aria-label={ t('planner.shortcuts.add') }
                             onClick={ () => openPlaceForm() }
                         >
                             <Plus size={ 23 } />
                             <span>
-                                일정 추가
+                                {
+                                    t('planner.shortcuts.add')
+                                }
                             </span>
                         </button>
                     </nav>

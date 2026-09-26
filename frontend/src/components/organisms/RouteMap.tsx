@@ -1,3 +1,5 @@
+import { t, locale } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import { Map as MapIcon } from 'lucide-react';
 import L from 'leaflet';
@@ -15,6 +17,8 @@ export function RouteMap({
     fallbackPlaces?: Place[];
     onAddPlace?: (position: MapPlace) => void;
 }) {
+    useTranslation();
+    const language = locale();
     const container = useRef<HTMLDivElement>(null);
     const mapRef = useRef<L.Map | null>(null);
     const tilesRef = useRef<L.TileLayer | null>(null);
@@ -82,12 +86,12 @@ export function RouteMap({
             const content = document.createElement('div');
             content.className = 'map-place-popup';
             const title = document.createElement('strong');
-            title.textContent = '선택한 위치';
+            title.textContent = t('maps.selectedLocation');
             const coordinates = document.createElement('p');
             coordinates.textContent = `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
             const button = document.createElement('button');
             button.type = 'button';
-            button.textContent = '이 위치에 장소 추가';
+            button.textContent = t('maps.button.addPlace');
             button.onclick = () => {
                 map.closePopup();
                 addRef.current?.(position);
@@ -111,6 +115,10 @@ export function RouteMap({
     }, []);
 
     useEffect(() => {
+        mapRef.current?.closePopup();
+    }, [language]);
+
+    useEffect(() => {
         const map = mapRef.current;
         if (!map) return;
         const layer = L.featureGroup().addTo(map);
@@ -121,11 +129,11 @@ export function RouteMap({
             group.ids.push(place.id);
             group.labels.push(
                 i >= places.length
-                    ? '선택'
+                    ? t('common.label.selected')
                     : i === 0
-                        ? '출발'
+                        ? t('route.label.start')
                         : i === places.length - 1
-                            ? '도착'
+                            ? t('route.label.arrival')
                             : String(i),
             );
             groups.set(key, group);
@@ -133,7 +141,9 @@ export function RouteMap({
         markersRef.current = [];
         groups.forEach(({ place, ids, labels }) => {
             const label =
-                labels.includes('출발') && labels.includes('도착') ? '출발·도착' : labels.join('/');
+                labels.includes(t('route.label.start')) && labels.includes(t('route.label.arrival'))
+                    ? t('route.label.roundTrip')
+                    : labels.join('/');
             const marker = L.marker([place.lat, place.lng], {
                 icon: markerIcon(label, false),
                 title: `${place.name} · ${label}`,
@@ -164,7 +174,7 @@ export function RouteMap({
         return () => {
             layer.remove();
         };
-    }, [geometry]);
+    }, [geometry, language]);
 
     useEffect(() => {
         markersRef.current.forEach(({ marker, ids, label }) => {
@@ -173,14 +183,16 @@ export function RouteMap({
             marker.setZIndexOffset(active ? 1000 : 0);
         });
         if (selectedPlace) mapRef.current?.setView([selectedPlace.lat, selectedPlace.lng], 16);
-    }, [selectedPlace?.id, selectedPlace?.lat, selectedPlace?.lng, geometry]);
+    }, [selectedPlace?.id, selectedPlace?.lat, selectedPlace?.lng, geometry, language]);
 
     return (
         <section className="map-panel">
             <div className="map-heading">
                 <span>
                     <MapIcon size={ 17 } />
-                    오늘의 여행 지도
+                    {
+                        t('maps.title')
+                    }
                 </span>
                 <span className="map-status">
                     OpenStreetMap
@@ -190,23 +202,24 @@ export function RouteMap({
                     className="text-button"
                     onClick={ fitMap }
                 >
-                    전체 동선 보기
+                    {
+                        t('route.button.showAll')
+                    }
                 </button>
             </div>
             {
-                onAddPlace && (
-                    <p className="map-position-note">
-                        지도를 클릭하거나 길게 눌러 장소를 추가하세요.
-                    </p>
-                )
+                onAddPlace && <p className="map-position-note">
+                    {
+                        t('maps.addPlaceHint')
+                    }
+                </p>
             }
             {
                 selectedPlace && (
                     <div className="map-selection">
                         {
-                            selectedPlace.name
+                            t('maps.selectedPlace', { name: selectedPlace.name })
                         }
-                        { ' · 선택한 장소' }
                     </div>
                 )
             }
@@ -214,7 +227,7 @@ export function RouteMap({
                 <div
                     ref={ container }
                     className="route-map"
-                    aria-label="여행 지도"
+                    aria-label={ t('maps.label') }
                 />
                 {
                     loading && !tileError && (
@@ -222,7 +235,9 @@ export function RouteMap({
                             className="map-loading"
                             role="status"
                         >
-                            지도 불러오는 중…
+                            {
+                                t('maps.loading')
+                            }
                         </span>
                     )
                 }
@@ -233,13 +248,17 @@ export function RouteMap({
                         className="map-tile-error"
                         role="alert"
                     >
-                        배경 지도를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.
+                        {
+                            t('maps.loadError')
+                        }
                         { ' ' }
                         <button
                             type="button"
                             onClick={ () => tilesRef.current?.redraw() }
                         >
-                            다시 불러오기
+                            {
+                                t('common.button.reload')
+                            }
                         </button>
                     </div>
                 )
@@ -248,9 +267,7 @@ export function RouteMap({
                 <i />
                 <span>
                     {
-                        plan
-                            ? 'Valhalla로 계산한 실제 이동 경로'
-                            : '방문 순서 표시 · 점선은 실제 이동 경로가 아닙니다'
+                        plan ? t('maps.routeLegend') : t('maps.orderLegend')
                     }
                 </span>
             </div>

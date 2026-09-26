@@ -267,3 +267,7 @@ API는 `POST /api/itineraries/copy`이며 `source_date`, `target_date`, `section
 비밀번호는 scrypt(N=2^17, r=8, p=1)와 무작위 salt로 해시합니다. 로그인은 7일 유효한 서버 세션을 사용하며 쿠키는 HttpOnly/SameSite=Lax입니다. 세션 원문은 DB에 저장하지 않고 로그아웃 시 폐기합니다. 변경 요청에는 CSRF 토큰과 요청 출처 검사를 적용하며 로그인 시도는 15분 동안 계정별 10회·접속 IP별 30회로 제한합니다. [OWASP 비밀번호 저장 기준](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)과 [세션 관리 기준](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)을 참고했습니다.
 
 외부 서비스는 HTTPS로 제공하고 `SESSION_COOKIE_SECURE=true`를 설정하세요. `CORS_ORIGINS`에는 실제 프런트엔드 주소(프로토콜·호스트·포트)를 정확히 지정합니다. 기존 `.env`를 유지하는 경우 개발 주소 `http://127.0.0.1:5173`도 필요에 따라 추가하세요. 프록시 뒤에서 HTTPS를 사용하면 신뢰할 수 있는 프록시의 scheme 전달도 설정해야 합니다. 프록시를 통하는 요청은 서버가 확인하는 접속 IP의 로그인 제한을 공유할 수 있습니다.
+
+### 화면 언어 설정
+
+로그인 화면과 상단 헤더에서 한국어·English를 선택할 수 있습니다. 선택은 브라우저에 저장되어 새로고침과 로그인 후에도 유지됩니다. 최초 언어는 브라우저의 지원 언어를 따르며 지원되지 않는 경우 한국어를 사용합니다. 언어를 바꾸어도 여행 날짜·시간대·계산 결과와 사용자 입력은 유지됩니다. 번역 파일과 개발 규칙은 `frontend/README.md`의 i18n 항목을 참고하세요.

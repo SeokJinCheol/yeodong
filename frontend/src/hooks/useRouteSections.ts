@@ -1,3 +1,5 @@
+import { t } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { api, json } from '../lib/api';
 import type { RouteSection } from '../lib/types';
@@ -8,6 +10,7 @@ export function useRouteSections(
     names: Record<string, string>,
     runMutation: (action: () => Promise<unknown>) => Promise<void>,
 ) {
+    useTranslation();
     const [selection, setSelection] = useState<{ date: string; id: number | null }>({
         date,
         id: null,
@@ -21,7 +24,7 @@ export function useRouteSections(
             ? selection.id
             : null;
     const daySections = sections.filter((s) => s.visit_date === date);
-    const defaultSectionName = names[date] ?? '기본 동선';
+    const defaultSectionName = names[date] ?? t('section.defaultName');
     function selectSection(targetDate: string, id: number | null) {
         setSelection({ date: targetDate, id });
     }

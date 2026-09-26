@@ -1,3 +1,6 @@
+import { LanguageSelect } from '../components/molecules/LanguageSelect';
+import { t, translateMessage } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, configureAccount, json } from '../lib/api';
 import { AccountContext, type Account, type AccountPreferences } from '../hooks/useAccount';
@@ -5,6 +8,7 @@ import { Button } from '../components/atoms/Button';
 
 type Session = { user: Account; csrf: string };
 export function AccountGate({ children }: { children: ReactNode }) {
+    useTranslation();
     const [user, setUser] = useState<Account | null>(null);
     const [loading, setLoading] = useState(true);
     const [setup, setSetup] = useState(false);
@@ -44,7 +48,7 @@ export function AccountGate({ children }: { children: ReactNode }) {
         const expired = () => {
             configureAccount(null, '', []);
             setUser(null);
-            setError('로그인이 만료되었거나 다른 계정으로 변경되었습니다. 다시 로그인해 주세요.');
+            setError(t('auth.error.expired'));
         };
         window.addEventListener('account-expired', expired);
         return () => window.removeEventListener('account-expired', expired);
@@ -83,7 +87,9 @@ export function AccountGate({ children }: { children: ReactNode }) {
         return (
             <main className="account-screen">
                 <p role="status">
-                    로그인 확인 중…
+                    {
+                        t('auth.status.loading')
+                    }
                 </p>
             </main>
         );
@@ -106,16 +112,25 @@ export function AccountGate({ children }: { children: ReactNode }) {
                     void submit();
                 } }
             >
+                <LanguageSelect />
                 <p className="eyebrow">
-                    여동 · 나만의 여행
+                    {
+                        t('brand.pageTitle')
+                    }
                 </p>
                 <h1>
                     {
-                        setup ? '첫 계정 만들기' : register ? '회원가입' : '로그인'
+                        setup
+                            ? t('auth.title.setup')
+                            : register
+                                ? t('auth.title.register')
+                                : t('auth.button.login')
                     }
                 </h1>
                 <p>
-                    여행과 일정은 로그인한 계정에만 저장됩니다.
+                    {
+                        t('auth.privacyNotice')
+                    }
                 </p>
                 {
                     error && (
@@ -124,13 +139,15 @@ export function AccountGate({ children }: { children: ReactNode }) {
                             className="error"
                         >
                             {
-                                error
+                                translateMessage(error)
                             }
                         </p>
                     )
                 }
                 <label>
-                    아이디
+                    {
+                        t('auth.form.username')
+                    }
                     <input
                         required
                         autoComplete="username"
@@ -139,13 +156,15 @@ export function AccountGate({ children }: { children: ReactNode }) {
                         pattern="[a-zA-Z0-9_.\-]+"
                         value={ username }
                         onChange={ (e) => setUsername(e.target.value) }
-                        placeholder="영문·숫자·점·밑줄·하이픈 3~40자"
+                        placeholder={ t('auth.form.usernamePlaceholder') }
                     />
                 </label>
                 {
                     register && (
                         <label>
-                            표시 이름
+                            {
+                                t('auth.form.displayName')
+                            }
                             <input
                                 required
                                 autoComplete="nickname"
@@ -157,7 +176,9 @@ export function AccountGate({ children }: { children: ReactNode }) {
                     )
                 }
                 <label>
-                    비밀번호
+                    {
+                        t('auth.form.password')
+                    }
                     <input
                         required
                         type="password"
@@ -166,14 +187,16 @@ export function AccountGate({ children }: { children: ReactNode }) {
                         maxLength={ 128 }
                         value={ password }
                         onChange={ (e) => setPassword(e.target.value) }
-                        placeholder="12자 이상"
+                        placeholder={ t('auth.form.passwordPlaceholder') }
                     />
                 </label>
                 {
                     setup && (
                         <>
                             <label>
-                                초기 설정 코드
+                                {
+                                    t('auth.form.setupCode')
+                                }
                                 <input
                                     required
                                     type="password"
@@ -183,15 +206,20 @@ export function AccountGate({ children }: { children: ReactNode }) {
                                 />
                             </label>
                             <p className="small muted">
-                                서버 관리자에게 받은 초기 설정 코드를 입력하세요. 기존 여행은 이 계정에
-                                연결됩니다.
+                                {
+                                    t('auth.form.setupHint')
+                                }
                             </p>
                         </>
                     )
                 }
                 <Button disabled={ busy }>
                     {
-                        busy ? '확인 중…' : register ? '계정 만들기' : '로그인'
+                        busy
+                            ? t('common.status.checking')
+                            : register
+                                ? t('auth.button.createAccount')
+                                : t('auth.button.login')
                     }
                 </Button>
                 {
@@ -207,7 +235,7 @@ export function AccountGate({ children }: { children: ReactNode }) {
                             } }
                         >
                             {
-                                register ? '로그인으로 돌아가기' : '새 계정 만들기'
+                                register ? t('auth.button.backToLogin') : t('auth.button.newAccount')
                             }
                         </Button>
                     )
@@ -220,7 +248,9 @@ export function AccountGate({ children }: { children: ReactNode }) {
                             disabled={ busy }
                             onClick={ () => void initialize() }
                         >
-                            다시 연결
+                            {
+                                t('common.button.reconnect')
+                            }
                         </Button>
                     )
                 }

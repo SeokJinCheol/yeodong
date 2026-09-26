@@ -1,3 +1,5 @@
+import { t, locale, translateMessage } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import type { Ref } from 'react';
 import { Clock3, MapPin, Route, Sparkles } from 'lucide-react';
 import { minutes } from '../../lib/api';
@@ -27,6 +29,7 @@ export function RouteOverview({
     busy,
     onAddPlace,
 }: Props) {
+    useTranslation();
     return (
         <div
             className="map-column"
@@ -39,11 +42,11 @@ export function RouteOverview({
                     onChange={ onModeChange }
                 />
                 {
-                    mode === 'MAP' && (
-                        <p className="map-mode-note">
-                            Map · 방문 순서와 위치만 표시합니다. 경로 API는 조회하지 않습니다.
-                        </p>
-                    )
+                    mode === 'MAP' && <p className="map-mode-note">
+                        {
+                            t('maps.orderNotice')
+                        }
+                    </p>
                 }
                 {
                     Object.entries(unavailable)
@@ -54,11 +57,15 @@ export function RouteOverview({
                                 key={ key }
                             >
                                 {
-                                    key === 'WALK' ? '도보' : key === 'DRIVE' ? '차량' : '대중교통'
-                                }
-                                { ' 이용 불가: ' }
-                                {
-                                    reason
+                                    t('route.status.unavailable', {
+                                        mode:
+                                            key === 'WALK'
+                                                ? t('route.mode.walk')
+                                                : key === 'DRIVE'
+                                                    ? t('route.mode.drive')
+                                                    : t('route.mode.transit'),
+                                        reason: translateMessage(reason),
+                                    })
                                 }
                             </p>
                         ))
@@ -67,17 +74,17 @@ export function RouteOverview({
             <div className="stats">
                 <StatCard
                     icon={ <Route size={ 15 } /> }
-                    label="총 이동시간"
+                    label={ t('route.stats.travelTime') }
                     value={ plan ? minutes(plan.total_travel_seconds / 60) : '—' }
                 />
                 <StatCard
                     icon={ <MapPin size={ 15 } /> }
-                    label="총 이동거리"
+                    label={ t('route.stats.distance') }
                     value={ plan ? `${(plan.total_distance_meters / 1000).toFixed(1)} km` : '—' }
                 />
                 <StatCard
                     icon={ <Clock3 size={ 15 } /> }
-                    label="이동 + 대기 + 머무르기"
+                    label={ t('route.stats.elapsedTime') }
                     value={ plan ? minutes(plan.total_elapsed_seconds / 60) : '—' }
                 />
             </div>
@@ -90,20 +97,20 @@ export function RouteOverview({
             {
                 plan && (
                     <p className="schedule-summary">
-                        { '대기 ' }
                         {
-                            minutes(plan.total_wait_seconds / 60)
-                        }
-                        { ' · 마지막 도착' }
-                        { ' ' }
-                        {
-                            new Date(plan.schedule.at(-1)!.visit_start).toLocaleString('ko-KR', {
-                                timeZone: plan.time_zone,
-                                month: 'numeric',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false,
+                            t('route.stats.scheduleSummary', {
+                                wait: minutes(plan.total_wait_seconds / 60),
+                                arrival: new Date(plan.schedule.at(-1)!.visit_start).toLocaleString(
+                                    locale(),
+                                    {
+                                        timeZone: plan.time_zone,
+                                        month: 'numeric',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false,
+                                    },
+                                ),
                             })
                         }
                     </p>
@@ -113,13 +120,15 @@ export function RouteOverview({
                 <Sparkles size={ 17 } />
                 <p>
                     <strong>
-                        한 걸음 더 여유로운 여행
+                        {
+                            t('route.advice.title')
+                        }
                     </strong>
                     <br />
                     {
                         plan?.source === 'valhalla'
-                            ? '장소를 추가하면 출발지와 도착지를 유지하며 동선을 다시 계산해요.'
-                            : '도보·차량 동선을 계산한 뒤 Google 지도에서 열 수 있어요.'
+                            ? t('route.advice.recalculateHint')
+                            : t('route.advice.exportHint')
                     }
                 </p>
             </div>

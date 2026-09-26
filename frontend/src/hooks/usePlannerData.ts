@@ -1,3 +1,5 @@
+import { t } from '../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { activeTripId, api, json } from '../lib/api';
 import type {
@@ -11,6 +13,7 @@ import type {
 } from '../lib/types';
 
 export function usePlannerData() {
+    useTranslation();
     const [routeSettings, setRouteSettings] = useState<Record<string, RoutePreferences>>({});
     const [trash, setTrash] = useState<TrashItem[]>([]);
     const [undo, setUndo] = useState<TrashItem>();
@@ -150,7 +153,7 @@ export function usePlannerData() {
         );
         settingsQueue.current = request
             .catch((e) => {
-                setError(`설정을 저장하지 못했습니다: ${e.message}`);
+                setError(t('settings.error.save', { message: e.message }));
             })
             .finally(() => setSettingsPending((n) => n - 1));
         return request;

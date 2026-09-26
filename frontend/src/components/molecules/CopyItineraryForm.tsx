@@ -1,3 +1,5 @@
+import { t, translateMessage } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Button } from '../atoms/Button';
 
@@ -10,12 +12,15 @@ export function CopyItineraryForm({
     busy: boolean;
     onCopy: (target: string) => Promise<void>;
 }) {
+    useTranslation();
     const [target, setTarget] = useState('');
     const [error, setError] = useState('');
     return (
         <details className="move-day copy-itinerary">
             <summary>
-                선택한 구간 복사
+                {
+                    t('itinerary.copy.title')
+                }
             </summary>
             <form
                 onSubmit={ async (e) => {
@@ -29,13 +34,16 @@ export function CopyItineraryForm({
                 } }
             >
                 <p>
-                    현재 구간의 장소와 출발·도착지, 메모·체크리스트, 순서·시간 설정을 복사합니다.
-                    원본은 유지하며, 이미 일정이 있는 날짜에는 ‘복사된 일정’ 구간으로 추가합니다.
+                    {
+                        t('itinerary.copy.description')
+                    }
                 </p>
                 <label>
-                    복사할 날짜
+                    {
+                        t('itinerary.copy.dateLabel')
+                    }
                     <input
-                        aria-label="일정 복사할 날짜"
+                        aria-label={ t('itinerary.copy.dateAriaLabel') }
                         type="date"
                         required
                         value={ target }
@@ -50,7 +58,7 @@ export function CopyItineraryForm({
                             className="error"
                         >
                             {
-                                error
+                                translateMessage(error)
                             }
                         </p>
                     )
@@ -60,7 +68,7 @@ export function CopyItineraryForm({
                     disabled={ busy || !count || !target }
                 >
                     {
-                        busy ? '복사 중…' : '일정 복사하기'
+                        busy ? t('common.status.copying') : t('itinerary.copy.button')
                     }
                 </Button>
             </form>

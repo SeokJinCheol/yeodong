@@ -1,3 +1,5 @@
+import { t, translateMessage } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useId, useRef, useState } from 'react';
 import { MapPin, Plus, Search, X } from 'lucide-react';
 import { api, json } from '../../lib/api';
@@ -23,6 +25,7 @@ export function PlaceForm({
     onSaved: () => Promise<void>;
     onClose: () => void;
 }) {
+    useTranslation();
     const formId = useId();
     const backdropRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -94,14 +97,14 @@ export function PlaceForm({
                         </span>
                         <h2 id="place-title">
                             {
-                                place ? '장소와 일정 수정' : '어디에 가고 싶으세요?'
+                                place ? t('place.form.editTitle') : t('place.form.addTitle')
                             }
                         </h2>
                     </div>
                     <Button
                         variant="ghost"
                         onClick={ onClose }
-                        aria-label="닫기"
+                        aria-label={ t('common.button.close') }
                     >
                         <X size={ 20 } />
                     </Button>
@@ -110,14 +113,16 @@ export function PlaceForm({
                     {
                         initialPosition && !place && (
                             <p className="map-position-note">
-                                지도에서 선택한 위치입니다. 장소 이름을 입력해 저장하세요.
+                                {
+                                    t('place.form.mapPositionNotice')
+                                }
                             </p>
                         )
                     }
                     <div className="search-row">
                         <input
-                            aria-label="장소 검색"
-                            placeholder="도시와 장소 검색 · 예: 도쿄 팡메종"
+                            aria-label={ t('place.search.label') }
+                            placeholder={ t('place.search.placeholder') }
                             value={ query }
                             onChange={ (e) => setQuery(e.target.value) }
                             onKeyDown={ (e) => {
@@ -131,7 +136,9 @@ export function PlaceForm({
                             onClick={ search }
                         >
                             <Search size={ 16 } />
-                            검색
+                            {
+                                t('common.button.search')
+                            }
                         </Button>
                     </div>
                     {
@@ -166,11 +173,14 @@ export function PlaceForm({
                         ))
                     }
                     <p className="muted small">
-                        장소를 검색하거나 지도에서 위치를 선택하세요. 검색되지 않으면 현지어
-                        이름으로 시도하거나 좌표를 직접 입력할 수 있어요.
+                        {
+                            t('place.search.description')
+                        }
                     </p>
                     <p className="small muted">
-                        검색 데이터: ©
+                        {
+                            t('place.search.attribution')
+                        }
                         { ' ' }
                         <a
                             href="https://www.openstreetmap.org/copyright"
@@ -212,28 +222,34 @@ export function PlaceForm({
                         } }
                     >
                         <label>
-                            장소 이름
+                            {
+                                t('place.form.name')
+                            }
                             <input
                                 required
                                 maxLength={ 120 }
                                 value={ form.name }
                                 onChange={ (e) => setForm({ ...form, name: e.target.value }) }
-                                placeholder="방문할 장소 이름"
+                                placeholder={ t('place.form.namePlaceholder') }
                             />
                         </label>
                         <label>
-                            장소 설명
+                            {
+                                t('place.form.notes')
+                            }
                             <textarea
                                 rows={ 3 }
                                 maxLength={ 4000 }
-                                placeholder="추천 메뉴, 예약 정보, 방문 시 참고할 내용을 적어 주세요."
+                                placeholder={ t('place.form.notesPlaceholder') }
                                 value={ form.description }
                                 onChange={ (e) => setForm({ ...form, description: e.target.value }) }
                             />
                         </label>
                         <fieldset className="task-editor">
                             <legend>
-                                이 장소에서 할 일
+                                {
+                                    t('place.checklist.title')
+                                }
                             </legend>
                             {
                                 form.tasks.map((task, i) => (
@@ -243,7 +259,9 @@ export function PlaceForm({
                                     >
                                         <input
                                             type="checkbox"
-                                            aria-label={ `할 일 ${i + 1} 완료` }
+                                            aria-label={ t('place.checklist.completeItem', {
+                                                number: i + 1,
+                                            }) }
                                             checked={ task.done }
                                             onChange={ (e) =>
                                                 setForm({
@@ -257,11 +275,11 @@ export function PlaceForm({
                                             }
                                         />
                                         <input
-                                            aria-label={ `할 일 ${i + 1}` }
+                                            aria-label={ t('place.checklist.item', { number: i + 1 }) }
                                             required
                                             maxLength={ 200 }
                                             value={ task.text }
-                                            placeholder="할 일을 입력하세요"
+                                            placeholder={ t('place.checklist.placeholder') }
                                             onChange={ (e) =>
                                                 setForm({
                                                     ...form,
@@ -276,7 +294,9 @@ export function PlaceForm({
                                         <button
                                             type="button"
                                             className="task-remove"
-                                            aria-label={ `할 일 ${i + 1} 삭제` }
+                                            aria-label={ t('place.checklist.deleteItem', {
+                                                number: i + 1,
+                                            }) }
                                             onClick={ () =>
                                                 setForm({
                                                     ...form,
@@ -308,11 +328,15 @@ export function PlaceForm({
                                     })
                                 }
                             >
-                                + 할 일 추가
+                                {
+                                    t('place.checklist.add')
+                                }
                             </button>
                         </fieldset>
                         <label>
-                            주소
+                            {
+                                t('place.form.address')
+                            }
                             <input
                                 maxLength={ 500 }
                                 value={ form.address }
@@ -321,7 +345,9 @@ export function PlaceForm({
                         </label>
                         <div className="form-grid">
                             <label>
-                                위도
+                                {
+                                    t('place.form.latitude')
+                                }
                                 <input
                                     required
                                     type="number"
@@ -340,7 +366,9 @@ export function PlaceForm({
                                 />
                             </label>
                             <label>
-                                경도
+                                {
+                                    t('place.form.longitude')
+                                }
                                 <input
                                     required
                                     type="number"
@@ -361,16 +389,20 @@ export function PlaceForm({
                         </div>
                         <div className="form-grid">
                             <label>
-                                지역
+                                {
+                                    t('place.form.area')
+                                }
                                 <input
                                     value={ form.area }
                                     maxLength={ 80 }
                                     onChange={ (e) => setForm({ ...form, area: e.target.value }) }
-                                    placeholder="신주쿠"
+                                    placeholder={ t('place.form.areaPlaceholder') }
                                 />
                             </label>
                             <label>
-                                머무는 시간 (분)
+                                {
+                                    t('place.form.stayMinutes')
+                                }
                                 <input
                                     required
                                     type="number"
@@ -384,7 +416,9 @@ export function PlaceForm({
                             </label>
                         </div>
                         <label>
-                            방문 날짜
+                            {
+                                t('place.form.visitDate')
+                            }
                             <input
                                 type="date"
                                 value={ form.visit_date }
@@ -402,14 +436,18 @@ export function PlaceForm({
                             className="text-button"
                             onClick={ () => setForm({ ...form, visit_date: '', section_id: null }) }
                         >
-                            날짜 미정으로 저장하기
+                            {
+                                t('place.form.unscheduled')
+                            }
                         </button>
                         {
                             form.visit_date && (
                                 <label>
-                                    동선 구간
+                                    {
+                                        t('section.label')
+                                    }
                                     <select
-                                        aria-label="동선 구간"
+                                        aria-label={ t('section.label') }
                                         value={ form.section_id ?? '' }
                                         onChange={ (e) =>
                                             setForm({
@@ -422,7 +460,8 @@ export function PlaceForm({
                                     >
                                         <option value="">
                                             {
-                                                defaultSectionNames[form.visit_date] ?? '기본 동선'
+                                                defaultSectionNames[form.visit_date] ??
+                                                t('section.defaultName')
                                             }
                                         </option>
                                         {
@@ -444,24 +483,25 @@ export function PlaceForm({
                             )
                         }
                         <label>
-                            필수 방문 순서 (선택)
+                            {
+                                t('place.form.requiredOrder')
+                            }
                             <input
                                 type="number"
                                 min="1"
                                 max="100"
                                 step="1"
                                 value={ form.required_order }
-                                placeholder="자동 배치"
+                                placeholder={ t('place.form.automaticOrder') }
                                 onChange={ (e) =>
                                     setForm({ ...form, required_order: e.target.value })
                                 }
                             />
                         </label>
                         <p className="small muted">
-                            입력한 숫자의 STEP에 고정합니다. 예: 3을 입력하면 STEP 03입니다. 비워 둔
-                            장소는 남은 자리에 자동 배치됩니다. 중간 방문지 수보다 큰 숫자나 중복
-                            숫자는 사용할 수 없습니다. 출발·도착지는 항상 처음·마지막이며 이 숫자는
-                            중간 방문지에만 적용됩니다.
+                            {
+                                t('place.form.requiredOrderHint')
+                            }
                         </p>
                         {
                             form.required_order && (
@@ -470,12 +510,16 @@ export function PlaceForm({
                                     className="text-button"
                                     onClick={ () => setForm({ ...form, required_order: '' }) }
                                 >
-                                    필수 순서 해제
+                                    {
+                                        t('place.form.clearRequiredOrder')
+                                    }
                                 </button>
                             )
                         }
                         <label>
-                            필수 도착 시각 (선택)
+                            {
+                                t('place.form.requiredTime')
+                            }
                             <input
                                 type="time"
                                 value={ form.required_time }
@@ -485,8 +529,9 @@ export function PlaceForm({
                             />
                         </label>
                         <p className="small muted">
-                            예: 12:00에 이곳에 있어야 해요. 일찍 도착하면 이 시각까지 기다린 뒤
-                            머무르기 시간이 시작됩니다. 방문 날짜·여행지 시간대 기준입니다.
+                            {
+                                t('place.form.requiredTimeHint')
+                            }
                         </p>
                         {
                             form.required_time && (
@@ -495,7 +540,9 @@ export function PlaceForm({
                                     className="text-button"
                                     onClick={ () => setForm({ ...form, required_time: '' }) }
                                 >
-                                    필수 시각 해제
+                                    {
+                                        t('place.form.clearRequiredTime')
+                                    }
                                 </button>
                             )
                         }
@@ -509,7 +556,7 @@ export function PlaceForm({
                                 className="error"
                             >
                                 {
-                                    error
+                                    translateMessage(error)
                                 }
                             </p>
                         )
@@ -522,7 +569,11 @@ export function PlaceForm({
                     >
                         <Plus size={ 16 } />
                         {
-                            busy ? '처리 중…' : place ? '수정 저장하기' : '장소 저장하기'
+                            busy
+                                ? t('common.status.working')
+                                : place
+                                    ? t('common.button.saveChanges')
+                                    : t('place.form.save')
                         }
                     </Button>
                 </footer>

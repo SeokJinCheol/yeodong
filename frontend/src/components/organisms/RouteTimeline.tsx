@@ -1,3 +1,5 @@
+import { t, locale } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { VisitStatusControl } from '../molecules/VisitStatusControl';
 import { PlaceMapLink } from '../molecules/PlaceMapLink';
 import {
@@ -37,6 +39,7 @@ export function RouteTimeline({
     busy: boolean;
     onEdit: (place: Place) => void;
 }) {
+    useTranslation();
     return (
         <div className="timeline">
             {
@@ -58,9 +61,9 @@ export function RouteTimeline({
                                     <span className="stop-kind">
                                         {
                                             i === 0
-                                                ? '출발'
+                                                ? t('route.label.start')
                                                 : i === plan.places.length - 1
-                                                    ? '도착'
+                                                    ? t('route.label.arrival')
                                                     : `STEP ${String(i).padStart(2, '0')}`
                                         }
                                     </span>
@@ -78,9 +81,8 @@ export function RouteTimeline({
                                     {
                                         place.required_order && i > 0 && i < plan.places.length - 1 && (
                                             <span className="order-badge">
-                                                { '필수 순서 ' }
                                                 {
-                                                    place.required_order
+                                                    t('place.requiredOrder', { order: place.required_order })
                                                 }
                                             </span>
                                         )
@@ -90,7 +92,7 @@ export function RouteTimeline({
                                     variant="ghost"
                                     disabled={ busy }
                                     onClick={ () => onEdit(place) }
-                                    aria-label={ `${place.name} 수정` }
+                                    aria-label={ t('common.accessibility.edit', { name: place.name }) }
                                 >
                                     <Pencil size={ 14 } />
                                 </Button>
@@ -99,7 +101,7 @@ export function RouteTimeline({
                                     variant="ghost"
                                     disabled={ busy }
                                     onClick={ () => onDelete(place.id) }
-                                    aria-label={ `${place.name} 삭제` }
+                                    aria-label={ t('common.accessibility.delete', { name: place.name }) }
                                 >
                                     <Trash2 size={ 14 } />
                                 </Button>
@@ -111,7 +113,7 @@ export function RouteTimeline({
                             />
                             <p>
                                 {
-                                    place.area || place.address || '등록한 장소'
+                                    place.area || place.address || t('place.savedName')
                                 }
                                 {
                                     i > 0 && i < plan.places.length - 1 && (
@@ -121,9 +123,10 @@ export function RouteTimeline({
                                             </span>
                                             <Clock3 size={ 12 } />
                                             {
-                                                minutes(place.stay_minutes)
+                                                t('place.stayDuration', {
+                                                    duration: minutes(place.stay_minutes),
+                                                })
                                             }
-                                            { ' 머무르기' }
                                         </>
                                     )
                                 }
@@ -138,26 +141,26 @@ export function RouteTimeline({
                                         className={ `stop-schedule ${plan.schedule[i].late_seconds ? 'late' : ''}` }
                                     >
                                         <span>
-                                            도착
-                                            { ' ' }
                                             {
-                                                new Date(plan.schedule[i].arrival_time).toLocaleTimeString(
-                                                    'ko-KR',
-                                                    {
+                                                t('schedule.arrivalAt', {
+                                                    time: new Date(
+                                                        plan.schedule[i].arrival_time,
+                                                    ).toLocaleTimeString(locale(), {
                                                         timeZone: plan.time_zone,
                                                         hour: '2-digit',
                                                         minute: '2-digit',
                                                         hour12: false,
-                                                    },
-                                                )
+                                                    }),
+                                                })
                                             }
                                         </span>
                                         {
                                             plan.schedule[i].required_time && (
                                                 <strong>
-                                                    { '필수 ' }
                                                     {
-                                                        plan.schedule[i].required_time
+                                                        t('schedule.requiredTime', {
+                                                            time: plan.schedule[i].required_time,
+                                                        })
                                                     }
                                                 </strong>
                                             )
@@ -165,9 +168,10 @@ export function RouteTimeline({
                                         {
                                             plan.schedule[i].wait_seconds > 0 && (
                                                 <span>
-                                                    { '대기 ' }
                                                     {
-                                                        minutes(plan.schedule[i].wait_seconds / 60)
+                                                        t('schedule.waitDuration', {
+                                                            duration: minutes(plan.schedule[i].wait_seconds / 60),
+                                                        })
                                                     }
                                                 </span>
                                             )
@@ -175,27 +179,28 @@ export function RouteTimeline({
                                         {
                                             plan.schedule[i].late_seconds > 0 && (
                                                 <strong>
-                                                    지각
-                                                    { ' ' }
                                                     {
-                                                        minutes(Math.ceil(plan.schedule[i].late_seconds / 60))
+                                                        t('schedule.lateDuration', {
+                                                            duration: minutes(
+                                                                Math.ceil(plan.schedule[i].late_seconds / 60),
+                                                            ),
+                                                        })
                                                     }
                                                 </strong>
                                             )
                                         }
                                         <span>
-                                            출발
-                                            { ' ' }
                                             {
-                                                new Date(plan.schedule[i].departure_time).toLocaleTimeString(
-                                                    'ko-KR',
-                                                    {
+                                                t('schedule.departureAt', {
+                                                    time: new Date(
+                                                        plan.schedule[i].departure_time,
+                                                    ).toLocaleTimeString(locale(), {
                                                         timeZone: plan.time_zone,
                                                         hour: '2-digit',
                                                         minute: '2-digit',
                                                         hour12: false,
-                                                    },
-                                                )
+                                                    }),
+                                                })
                                             }
                                         </span>
                                     </div>
@@ -229,18 +234,16 @@ export function RouteTimeline({
                                         </strong>
                                         <span>
                                             {
-                                                plan.mode === 'WALK'
-                                                    ? '도보'
-                                                    : plan.mode === 'TRANSIT'
-                                                        ? '대중교통'
-                                                        : '차량'
+                                                t('route.segmentSummary', {
+                                                    mode:
+                                                        plan.mode === 'WALK'
+                                                            ? t('route.mode.walk')
+                                                            : plan.mode === 'TRANSIT'
+                                                                ? t('route.mode.transit')
+                                                                : t('route.mode.drive'),
+                                                    distance: (plan.legs[i].distance_meters / 1000).toFixed(1),
+                                                })
                                             }
-                                            { ' ' }
-                                            { '· ' }
-                                            {
-                                                (plan.legs[i].distance_meters / 1000).toFixed(1)
-                                            }
-                                            { ' km' }
                                         </span>
                                     </div>
                                 )

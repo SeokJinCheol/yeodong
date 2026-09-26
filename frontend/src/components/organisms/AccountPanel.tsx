@@ -1,9 +1,12 @@
+import { t, translateMessage } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useAccount } from '../../hooks/useAccount';
 import { Button } from '../atoms/Button';
 import type { RoutePreferences } from '../../lib/types';
 
 export function AccountPanel() {
+    useTranslation();
     const account = useAccount();
     const [value, setValue] = useState(account.user.preferences);
     const [busy, setBusy] = useState(false);
@@ -24,32 +27,37 @@ export function AccountPanel() {
     return (
         <section
             className="account-panel"
-            aria-label="내 계정"
+            aria-label={ t('account.title') }
         >
             <span>
                 {
-                    account.user.display_name
+                    t('account.greeting', { name: account.user.display_name })
                 }
-                { ' 님' }
             </span>
             <details>
                 <summary>
-                    내 기본 설정
+                    {
+                        t('account.preferences.title')
+                    }
                 </summary>
                 <form
                     onSubmit={ (e) => {
                         e.preventDefault();
                         void act(async () => {
                             await account.savePreferences(value);
-                            setMessage('기본 설정을 저장했습니다.');
+                            setMessage(t('account.preferences.saved'));
                         });
                     } }
                 >
                     <p className="small muted">
-                        별도 설정이 없는 일정에 적용합니다. 이미 저장한 일정 설정은 유지됩니다.
+                        {
+                            t('account.preferences.description')
+                        }
                     </p>
                     <label>
-                        기본 출발 시각
+                        {
+                            t('account.preferences.departureTime')
+                        }
                         <input
                             type="time"
                             required
@@ -58,39 +66,59 @@ export function AccountPanel() {
                         />
                     </label>
                     <label>
-                        기본 시간대
+                        {
+                            t('account.preferences.timeZone')
+                        }
                         <select
                             value={ value.timeZone }
                             onChange={ (e) => setValue({ ...value, timeZone: e.target.value }) }
                         >
                             <option value="Asia/Tokyo">
-                                일본 (도쿄)
+                                {
+                                    t('common.timeZone.tokyo')
+                                }
                             </option>
                             <option value="Asia/Seoul">
-                                한국 (서울)
+                                {
+                                    t('common.timeZone.seoul')
+                                }
                             </option>
                             <option value="Asia/Taipei">
-                                대만 (타이베이)
+                                {
+                                    t('common.timeZone.taipei')
+                                }
                             </option>
                             <option value="Asia/Singapore">
-                                싱가포르
+                                {
+                                    t('common.timeZone.singapore')
+                                }
                             </option>
                             <option value="Europe/Paris">
-                                프랑스 (파리)
+                                {
+                                    t('common.timeZone.paris')
+                                }
                             </option>
                             <option value="Europe/London">
-                                영국 (런던)
+                                {
+                                    t('common.timeZone.london')
+                                }
                             </option>
                             <option value="America/New_York">
-                                미국 (뉴욕)
+                                {
+                                    t('common.timeZone.newYork')
+                                }
                             </option>
                             <option value="America/Los_Angeles">
-                                미국 (LA)
+                                {
+                                    t('common.timeZone.losAngeles')
+                                }
                             </option>
                         </select>
                     </label>
                     <label>
-                        기본 이동수단
+                        {
+                            t('account.preferences.travelMode')
+                        }
                         <select
                             value={ value.mode }
                             onChange={ (e) =>
@@ -104,18 +132,26 @@ export function AccountPanel() {
                                 Map
                             </option>
                             <option value="WALK">
-                                도보
+                                {
+                                    t('route.mode.walk')
+                                }
                             </option>
                             <option value="DRIVE">
-                                차량
+                                {
+                                    t('route.mode.drive')
+                                }
                             </option>
                             <option value="TRANSIT">
-                                대중교통
+                                {
+                                    t('route.mode.transit')
+                                }
                             </option>
                         </select>
                     </label>
                     <Button disabled={ busy }>
-                        기본 설정 저장
+                        {
+                            t('account.preferences.save')
+                        }
                     </Button>
                 </form>
             </details>
@@ -124,7 +160,9 @@ export function AccountPanel() {
                 disabled={ busy }
                 onClick={ () => void act(account.logout) }
             >
-                로그아웃
+                {
+                    t('auth.button.logout')
+                }
             </Button>
             {
                 error && (
@@ -133,7 +171,7 @@ export function AccountPanel() {
                         role="alert"
                     >
                         {
-                            error
+                            translateMessage(error)
                         }
                     </p>
                 )
@@ -141,7 +179,7 @@ export function AccountPanel() {
             {
                 message && <p role="status">
                     {
-                        message
+                        translateMessage(message)
                     }
                 </p>
             }

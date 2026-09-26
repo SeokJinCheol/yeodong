@@ -1,3 +1,5 @@
+import { t, translateMessage } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { Car, Footprints, TrainFront, Map } from 'lucide-react';
 import type { Mode } from '../../lib/types';
 export function ModeSwitch({
@@ -9,24 +11,25 @@ export function ModeSwitch({
     unavailable?: Partial<Record<Mode | 'MAP', string>>;
     onChange: (mode: Mode | 'MAP') => void;
 }) {
+    useTranslation();
     return (
         <div
             className="mode-switch"
-            aria-label="이동수단"
+            aria-label={ t('route.mode.label') }
         >
             {
                 (
                     [
                         ['MAP', 'Map', Map],
-                        ['WALK', '도보', Footprints],
-                        ['DRIVE', '차량', Car],
-                        ['TRANSIT', '대중교통', TrainFront],
+                        ['WALK', t('route.mode.walk'), Footprints],
+                        ['DRIVE', t('route.mode.drive'), Car],
+                        ['TRANSIT', t('route.mode.transit'), TrainFront],
                     ] as const
                 ).map(([mode, label, Icon]) => (
                     <button
                         key={ mode }
                         aria-pressed={ value === mode }
-                        title={ unavailable[mode] }
+                        title={ unavailable[mode] ? translateMessage(unavailable[mode]!) : undefined }
                         aria-disabled={ !!unavailable[mode] }
                         className={ `${value === mode ? 'active' : ''} ${unavailable[mode] ? 'unavailable' : ''}` }
                         onClick={ () => {

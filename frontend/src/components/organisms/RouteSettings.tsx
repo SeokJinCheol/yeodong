@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { ArrowDownUp } from 'lucide-react';
 import type { Place } from '../../lib/types';
 interface Props {
@@ -34,13 +36,16 @@ export function RouteSettings({
     mutating,
     recalculate,
 }: Props) {
+    useTranslation();
     return (
         <>
             <div className="transit-settings">
                 <label>
-                    여행 출발 시각
+                    {
+                        t('route.settings.departureTime')
+                    }
                     <input
-                        aria-label="여행 출발 시각"
+                        aria-label={ t('route.settings.departureTime') }
                         type="time"
                         required
                         value={ departureTime }
@@ -50,41 +55,60 @@ export function RouteSettings({
                     />
                 </label>
                 <label>
-                    시간대
+                    {
+                        t('common.label.timeZone')
+                    }
                     <select
-                        aria-label="여행지 시간대"
+                        aria-label={ t('route.settings.timeZone') }
                         value={ timeZone }
                         onChange={ (e) => setTimeZone(e.target.value) }
                     >
                         <option value="Asia/Tokyo">
-                            일본 (도쿄)
+                            {
+                                t('common.timeZone.tokyo')
+                            }
                         </option>
                         <option value="Asia/Seoul">
-                            한국 (서울)
+                            {
+                                t('common.timeZone.seoul')
+                            }
                         </option>
                         <option value="Asia/Taipei">
-                            대만 (타이베이)
+                            {
+                                t('common.timeZone.taipei')
+                            }
                         </option>
                         <option value="Asia/Singapore">
-                            싱가포르
+                            {
+                                t('common.timeZone.singapore')
+                            }
                         </option>
                         <option value="Europe/Paris">
-                            프랑스 (파리)
+                            {
+                                t('common.timeZone.paris')
+                            }
                         </option>
                         <option value="Europe/London">
-                            영국 (런던)
+                            {
+                                t('common.timeZone.london')
+                            }
                         </option>
                         <option value="America/New_York">
-                            미국 (뉴욕)
+                            {
+                                t('common.timeZone.newYork')
+                            }
                         </option>
                         <option value="America/Los_Angeles">
-                            미국 (LA)
+                            {
+                                t('common.timeZone.losAngeles')
+                            }
                         </option>
                     </select>
                 </label>
                 <p>
-                    시간대·출발 시각 변경은 자동 재계산하지 않습니다. 적용하려면 동선 다시 계산을
-                    눌러 주세요.
+                    {
+                        t('route.settings.manualRecalculationHint')
+                    }
                 </p>
             </div>
             {
@@ -93,14 +117,18 @@ export function RouteSettings({
                         className="time-pending"
                         role="status"
                     >
-                        시간 설정이 변경되었습니다. 현재 동선은 이전 시간 설정으로 계산된 결과입니다.
+                        {
+                            t('route.settings.timeChanged')
+                        }
                         <button
                             type="button"
                             className="text-button"
                             disabled={ busy || orderOnly }
                             onClick={ recalculate }
                         >
-                            변경한 시간으로 동선 다시 계산
+                            {
+                                t('route.button.recalculateTime')
+                            }
                         </button>
                     </div>
                 )
@@ -108,9 +136,11 @@ export function RouteSettings({
             <div className="endpoint-selectors">
                 <label>
                     <span className="endpoint-dot" />
-                    출발
+                    {
+                        t('route.label.start')
+                    }
                     <select
-                        aria-label="출발지"
+                        aria-label={ t('route.settings.start') }
                         value={ start ?? '' }
                         onChange={ (e) =>
                             onEndpointsChange({
@@ -123,7 +153,9 @@ export function RouteSettings({
                             value=""
                             disabled
                         >
-                            출발지 선택
+                            {
+                                t('route.settings.selectStart')
+                            }
                         </option>
                         {
                             places.map((p) => (
@@ -142,8 +174,8 @@ export function RouteSettings({
                 <button
                     type="button"
                     className="swap-endpoints"
-                    aria-label="출발지와 도착지 바꾸기"
-                    title="출발지와 도착지 바꾸기"
+                    aria-label={ t('route.settings.swapEndpoints') }
+                    title={ t('route.settings.swapEndpoints') }
                     disabled={ mutating || start === undefined || end === undefined || start === end }
                     onClick={ () => {
                         if (start === undefined || end === undefined) return;
@@ -155,9 +187,11 @@ export function RouteSettings({
                 </button>
                 <label>
                     <span className="endpoint-dot end" />
-                    도착
+                    {
+                        t('route.label.arrival')
+                    }
                     <select
-                        aria-label="도착지"
+                        aria-label={ t('route.settings.end') }
                         value={ end ?? '' }
                         onChange={ (e) =>
                             onEndpointsChange({
@@ -170,7 +204,9 @@ export function RouteSettings({
                             value=""
                             disabled
                         >
-                            도착지 선택
+                            {
+                                t('route.settings.selectEnd')
+                            }
                         </option>
                         {
                             places.map((p) => (

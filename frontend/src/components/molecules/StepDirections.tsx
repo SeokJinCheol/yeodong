@@ -1,8 +1,11 @@
+import { t } from '../../lib/i18n';
+import { useTranslation } from 'react-i18next';
 import { ArrowDown, ExternalLink } from 'lucide-react';
 import type { MapPlace, Mode } from '../../lib/types';
 import { mapsLinks } from '../../lib/mapsUrl';
 
 export function StepDirections({ from, to, mode }: { from: MapPlace; to: MapPlace; mode: Mode }) {
+    useTranslation();
     const [{ url }] = mapsLinks([from, to], mode);
     return (
         <div className="step-directions">
@@ -11,17 +14,27 @@ export function StepDirections({ from, to, mode }: { from: MapPlace; to: MapPlac
                 href={ url }
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={ `${from.name}에서 ${to.name}까지 Google 길찾기` }
+                aria-label={ t('maps.link.directions', {
+                    from: from.name,
+                    to: to.name,
+                }) }
             >
                 <span>
-                    { '동선 열기 ' }
+                    {
+                        t('maps.button.openRouteLabel')
+                    }
                     <ExternalLink size={ 13 } />
                 </span>
                 <small>
-                    Google 길찾기 ·
-                    { ' ' }
                     {
-                        mode === 'WALK' ? '도보' : mode === 'DRIVE' ? '차량' : '대중교통'
+                        t('maps.directionsMode', {
+                            mode:
+                                mode === 'WALK'
+                                    ? t('route.mode.walk')
+                                    : mode === 'DRIVE'
+                                        ? t('route.mode.drive')
+                                        : t('route.mode.transit'),
+                        })
                     }
                 </small>
             </a>

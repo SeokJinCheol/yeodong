@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import type { Trip } from './types';
 export let activeTripId = 1;
 let accountId: number | null = null;
@@ -47,7 +48,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
         throw new ApiError(
             typeof data?.detail === 'string'
                 ? data.detail
-                : `요청을 처리하지 못했습니다 (${response.status}). 입력값과 서버 연결을 확인해 주세요.`,
+                : t('common.error.requestFailed', { status: response.status }),
             response.headers.get('X-Route-Unavailable') === 'true',
             response.status,
         );
@@ -60,7 +61,12 @@ export const json = (method: string, data: unknown): RequestInit => ({
 });
 export function minutes(value: number) {
     const n = Math.round(value);
-    return n >= 60 ? `${Math.floor(n / 60)}시간${n % 60 ? ` ${n % 60}분` : ''}` : `${n}분`;
+    if (n < 60) return t('common.duration.minutes', { minutes: n });
+    const hours = Math.floor(n / 60),
+        remainder = n % 60;
+    return remainder
+        ? t('common.duration.hoursMinutes', { hours, minutes: remainder })
+        : t('common.duration.hours', { hours });
 }
 export function localDate() {
     const d = new Date();
