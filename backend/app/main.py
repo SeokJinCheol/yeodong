@@ -5,10 +5,11 @@ from datetime import date, datetime, timezone
 import json
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import db, geocoding, transit, scheduling, valhalla
+from . import db, geocoding, transit, scheduling, valhalla, workspace
 from .config import settings
 from .models import AssignInput, CopyItineraryInput, MoveDayInput, Place, PlaceInput, PlanInput, TaskStatus, SectionInput
 from .routing import cluster_places
@@ -22,6 +23,26 @@ async def lifespan(app):
 
 app = FastAPI(title='여동 · 여행 동선 API', version='0.1.0', lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=['*'], allow_headers=['*'])
+
+app.include_router(workspace.router)
+
+
+@app.middleware('http')
+async def trip_scope(request: Request, call_next):
+    try:
+        trip_id = int(request.headers.get('X-Trip-ID', '1'))
+    except ValueError:
+        return JSONResponse(status_code=422, content={'detail': '여행 ID가 올바르지 않습니다.'})
+    with db.connection(global_db=True) as conn:
+        if not conn.execute('SELECT 1 FROM trips WHERE id=?', (trip_id,)).fetchone():
+            return JSONResponse(status_code=404, content={'detail': '여행이 없습니다. 여행 목록을 다시 선택해 주세요.'})
+    token = db.active_trip.set(trip_id)
+    try:
+        if trip_id != 1:
+            db.init_db(trip_id=trip_id, seed=False)
+        return await call_next(request)
+    finally:
+        db.active_trip.reset(token)
 
 
 @app.get('/api/health')
@@ -76,6 +97,9 @@ def delete_section(section_id: int):
             raise HTTPException(404, '구간이 없습니다.')
         conn.execute('UPDATE places SET section_id=NULL WHERE section_id=?', (section_id,))
         conn.execute('DELETE FROM sections WHERE id=?', (section_id,))
+        for key in workspace.read_settings(conn):
+            if workspace.parse_key(key)[1] == section_id:
+                conn.execute('DELETE FROM route_settings WHERE key=?', (key,))
 
 
 def validate_section(conn, section_id, visit_date):
@@ -116,14 +140,20 @@ def update_place(place_id: int, place: PlaceInput):
         cursor = conn.execute(f"UPDATE places SET {','.join(f'{key}=?' for key in values)} WHERE id=?", [*values.values(), place_id])
         if not cursor.rowcount:
             raise HTTPException(404, '장소가 없습니다.')
+        workspace.repair_settings(conn)
     return dict(id=place_id, **place.model_dump(mode='json'))
 
 
 @app.delete('/api/places/{place_id}', status_code=204)
 def delete_place(place_id: int):
     with db.connection() as conn:
-        if not conn.execute('DELETE FROM places WHERE id=?', (place_id,)).rowcount:
+        conn.execute('BEGIN IMMEDIATE')
+        row = conn.execute('SELECT * FROM places WHERE id=?', (place_id,)).fetchone()
+        if row is None:
             raise HTTPException(404, '장소가 없습니다.')
+        workspace.archive(conn, [row], f"장소 · {row['name']}")
+        conn.execute('DELETE FROM places WHERE id=?', (place_id,))
+        conn.execute('DELETE FROM saved_plans')
 
 
 @app.get('/api/search')
@@ -139,9 +169,13 @@ async def plan(payload: PlanInput):
     lookup = {p['id']: p for p in all_places if p['section_id'] == payload.section_id}
     if payload.start_id not in lookup or payload.end_id not in lookup:
         raise HTTPException(404, '출발지 또는 도착지를 다시 선택해 주세요.')
-    stops = [p for p in lookup.values() if p['visit_date'] == payload.visit_date.isoformat() and p['id'] not in {payload.start_id, payload.end_id}]
+    stops = [p for p in lookup.values() if p['visit_date'] == payload.visit_date.isoformat() and p['id'] not in {payload.start_id, payload.end_id} and p['id'] not in payload.excluded_ids]
     if len(stops) > 8:
         raise HTTPException(422, '구간별 중간 방문지는 최대 8개입니다. 다른 구간이나 날짜로 나눠 주세요.')
+    if payload.excluded_ids:
+        fixed = sorted((p for p in stops if p['required_order']), key=lambda p: (p['required_order'], p['id']))
+        ranks = {p['id']: i for i, p in enumerate(fixed, 1)}
+        stops = [{**p, 'required_order': ranks.get(p['id'])} for p in stops]
     nodes = [lookup[payload.start_id], *stops, lookup[payload.end_id]]
     valhalla.costing(payload.mode)
     departure = transit.departure_for(payload)
@@ -202,6 +236,7 @@ def assign(payload: AssignInput):
         if not ids <= found:
             raise HTTPException(404, '코스에 삭제된 장소가 있습니다. 새로고침해 주세요.')
         conn.executemany('UPDATE places SET visit_date=?, section_id=? WHERE id=?', [(payload.visit_date.isoformat(), payload.section_id, i) for i in ids])
+        workspace.repair_settings(conn)
     return {'updated': len(ids)}
 
 
@@ -224,6 +259,10 @@ def move_day(payload: MoveDayInput):
                      (payload.target_date.isoformat(), payload.source_date.isoformat()))
         conn.execute('UPDATE metadata SET key=? WHERE key=?',
                      (f'default-section:{payload.target_date.isoformat()}', f'default-section:{payload.source_date.isoformat()}'))
+        for key, value in list(workspace.read_settings(conn).items()):
+            if workspace.parse_key(key)[0] == payload.source_date.isoformat():
+                conn.execute('DELETE FROM route_settings WHERE key=?', (key,))
+                workspace.put_settings(conn, payload.target_date.isoformat() + key[10:], value)
     return {'updated': count}
 
 
@@ -238,8 +277,11 @@ def copy_itinerary(payload: CopyItineraryInput):
                                  (source, payload.section_id)))
         if not rows:
             raise HTTPException(404, '복사할 구간에 장소가 없습니다.')
+        original_settings = workspace.read_settings(conn).get(workspace.section_key(source, payload.section_id), workspace.RouteSettings().model_dump())
+        source_start = payload.start_id or original_settings.get('start')
+        source_end = payload.end_id or original_settings.get('end')
         ids = {row['id'] for row in rows}
-        for endpoint in (payload.start_id, payload.end_id):
+        for endpoint in (source_start, source_end):
             if endpoint is None or endpoint in ids:
                 continue
             row = conn.execute('SELECT * FROM places WHERE id=? AND section_id IS ?',
@@ -278,6 +320,9 @@ def copy_itinerary(payload: CopyItineraryInput):
             values.update(visit_date=target, section_id=target_section)
             cursor = conn.execute(f"INSERT INTO places ({','.join(values)}) VALUES ({','.join('?' for _ in values)})", list(values.values()))
             copied_ids[row['id']] = cursor.lastrowid
+        original_settings['start'] = copied_ids.get(source_start)
+        original_settings['end'] = copied_ids.get(source_end)
+        workspace.put_settings(conn, workspace.section_key(target, target_section), original_settings)
         return {'copied': len(rows), 'target_date': target, 'section_id': target_section,
                 'section_name': name, 'place_id_map': copied_ids}
 
@@ -286,6 +331,9 @@ def copy_itinerary(payload: CopyItineraryInput):
 def delete_day(visit_date: date):
     target = visit_date.isoformat()
     with db.connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        deleted_rows = list(conn.execute('SELECT * FROM places WHERE visit_date=?', (target,)))
+        workspace.archive(conn, deleted_rows, f'날짜 · {target}', day=target)
         deleted_ids = {row['id'] for row in conn.execute('SELECT id FROM places WHERE visit_date=?', (target,))}
         conn.execute('DELETE FROM places WHERE visit_date=?', (target,))
         conn.execute('DELETE FROM sections WHERE visit_date=?', (target,))

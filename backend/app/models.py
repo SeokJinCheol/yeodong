@@ -21,6 +21,7 @@ class SectionInput(BaseModel):
 
 
 class PlaceInput(BaseModel):
+    visit_status: Literal["pending", "visited", "skipped"] = "pending"
     section_id: int | None = Field(default=None, ge=1)
     name: str = Field(min_length=1, max_length=120, pattern=r"\S")
     lat: float = Field(ge=-90, le=90)
@@ -41,6 +42,7 @@ class Place(PlaceInput):
 
 
 class PlanInput(BaseModel):
+    excluded_ids: list[int] = Field(default_factory=list, max_length=100)
     section_id: int | None = Field(default=None, ge=1)
     force_refresh: bool = False
     visit_date: date

@@ -1,13 +1,19 @@
 import sqlite3
 import json
 from contextlib import contextmanager
+from contextvars import ContextVar
 
 from .config import settings
 
 
+active_trip = ContextVar('active_trip', default=1)
+
+
 @contextmanager
-def connection():
-    db = sqlite3.connect(settings.database_path)
+def connection(global_db=False, trip_id=None):
+    selected = 1 if global_db else (active_trip.get() if trip_id is None else trip_id)
+    path = settings.database_path if selected == 1 else f'{settings.database_path}.trip-{selected}.db'
+    db = sqlite3.connect(path, timeout=15)
     db.row_factory = sqlite3.Row
     try:
         yield db
@@ -19,8 +25,8 @@ def connection():
         db.close()
 
 
-def init_db():
-    with connection() as db:
+def init_db(trip_id=1, seed=True):
+    with connection(trip_id=trip_id) as db:
         db.execute("""CREATE TABLE IF NOT EXISTS places (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL, lat REAL NOT NULL, lng REAL NOT NULL,
@@ -40,6 +46,16 @@ def init_db():
         db.execute("CREATE TABLE IF NOT EXISTS sections (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, visit_date TEXT NOT NULL)")
         if 'section_id' not in columns:
             db.execute("ALTER TABLE places ADD COLUMN section_id INTEGER REFERENCES sections(id)")
+        if 'visit_status' not in columns:
+            db.execute("ALTER TABLE places ADD COLUMN visit_status TEXT NOT NULL DEFAULT 'pending'")
+        db.execute("CREATE TABLE IF NOT EXISTS route_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        db.execute("CREATE TABLE IF NOT EXISTS trash (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL, payload TEXT NOT NULL, deleted_at TEXT NOT NULL)")
+        if trip_id == 1:
+            db.execute("CREATE TABLE IF NOT EXISTS trips (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)")
+            db.execute("INSERT OR IGNORE INTO trips (id,name) VALUES (1,'기존 여행')")
+        if not seed:
+            db.execute("CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT)")
+            db.execute("INSERT OR IGNORE INTO metadata VALUES ('seeded','1')")
         db.execute("CREATE TABLE IF NOT EXISTS saved_plans (cache_key TEXT PRIMARY KEY, result TEXT NOT NULL, saved_at REAL NOT NULL)")
         db.execute("CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT)")
         if not db.execute("SELECT 1 FROM metadata WHERE key='seeded'").fetchone():
