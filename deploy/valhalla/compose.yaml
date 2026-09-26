@@ -1,0 +1,24 @@
+name: yeodong-routing
+services:
+  valhalla:
+    image: ghcr.io/valhalla/valhalla-scripted@sha256:f9f12c3f835750fc657d1d030a392f7a548699c1c2a961d083ed761e0db8bc14
+    container_name: yeodong-valhalla
+    ports:
+      - "127.0.0.1:8002:8002"
+    volumes:
+      - ./data:/custom_files
+    environment:
+      server_threads: "2"
+      build_admins: "True"
+      build_time_zones: "True"
+      build_elevation: "False"
+      build_transit: "False"
+      build_tar: "True"
+      use_tiles_ignore_pbf: "True"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8002/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15m

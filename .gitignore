@@ -18,3 +18,7 @@ __pycache__/
 *.log
 .DS_Store
 *.tsbuildinfo
+
+# Local Valhalla map data
+deploy/valhalla/data/
+deploy/valhalla/downloads/
