@@ -1,4 +1,4 @@
-import { LanguageSelect } from '../molecules/LanguageSelect';
+import { ProfileMenu } from '../organisms/ProfileMenu';
 import { t } from '../../lib/i18n';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
@@ -10,7 +10,7 @@ export function PlannerLayout({ children }: { children: ReactNode }) {
             <header className="app-header">
                 <a
                     className="brand"
-                    href={ import.meta.env.BASE_URL }
+                    href="#/"
                 >
                     <span>
                         <Route size={ 23 } />
@@ -25,18 +25,13 @@ export function PlannerLayout({ children }: { children: ReactNode }) {
                     </span>
                 </a>
                 <div className="header-right">
-                    <LanguageSelect />
                     <span className="header-active">
                         <Compass size={ 16 } />
                         {
                             t('brand.planner')
                         }
                     </span>
-                    <span className="avatar">
-                        {
-                            t('brand.avatar')
-                        }
-                    </span>
+                    <ProfileMenu />
                 </div>
             </header>
             <main>

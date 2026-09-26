@@ -7,6 +7,7 @@ import type { PlaceInput, Place, MapPlace, RouteSection } from '../../lib/types'
 import { Button } from '../atoms/Button';
 
 export function PlaceForm({
+    active = true,
     date,
     defaultSectionNames,
     sectionId,
@@ -16,6 +17,7 @@ export function PlaceForm({
     onSaved,
     onClose,
 }: {
+    active?: boolean;
     defaultSectionNames: Record<string, string>;
     sectionId: number | null;
     sections: RouteSection[];
@@ -29,6 +31,7 @@ export function PlaceForm({
     const formId = useId();
     const backdropRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
+        if (!active) return;
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
         const viewport = window.visualViewport;
@@ -45,7 +48,7 @@ export function PlaceForm({
             viewport?.removeEventListener('resize', updateViewport);
             viewport?.removeEventListener('scroll', updateViewport);
         };
-    }, []);
+    }, [active]);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Partial<PlaceInput>[]>([]);
     const [form, setForm] = useState({

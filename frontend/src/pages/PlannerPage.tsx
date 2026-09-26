@@ -1,6 +1,3 @@
-import { AccountPanel } from '../components/organisms/AccountPanel';
-import { TripTools } from '../components/organisms/TripTools';
-import { PlannerLayout } from '../components/templates/PlannerLayout';
 import { t, locale, translateMessage } from '../lib/i18n';
 import { useTranslation } from 'react-i18next';
 import { ItineraryProgress } from '../components/organisms/ItineraryProgress';
@@ -21,7 +18,7 @@ import { CourseList } from '../components/organisms/CourseList';
 import { SavedPlaces } from '../components/organisms/SavedPlaces';
 import { TripCalendar } from '../components/organisms/TripCalendar';
 
-import { usePlannerData } from '../hooks/usePlannerData';
+import type { usePlannerData } from '../hooks/usePlannerData';
 import { useRoutePlan } from '../hooks/useRoutePlan';
 import { useRouteSettings } from '../hooks/useRouteSettings';
 import { useRouteSections } from '../hooks/useRouteSections';
@@ -29,9 +26,14 @@ import { fallbackRoute, orderedPlacesFor, plannerDates } from '../lib/planner';
 import { RouteSectionManager } from '../components/organisms/RouteSectionManager';
 import { RouteSettings } from '../components/organisms/RouteSettings';
 
-export function PlannerPage() {
+export function PlannerPage({
+    data,
+    active,
+}: {
+    data: ReturnType<typeof usePlannerData>;
+    active: boolean;
+}) {
     useTranslation();
-    const data = usePlannerData();
     const {
         allPlaces,
         courses,
@@ -151,7 +153,7 @@ export function PlannerPage() {
         tabs.scrollTo({
             left: selected.offsetLeft - (tabs.clientWidth - selected.offsetWidth) / 2,
         });
-    }, [date]);
+    }, [date, active]);
     async function copyItinerary(target: string) {
         const result = await data.copyItinerary({
             source_date: date,
@@ -208,14 +210,7 @@ export function PlannerPage() {
             weekday: 'short',
         });
     return (
-        <PlannerLayout>
-            <AccountPanel />
-            <TripTools
-                busy={ mutating || busy || data.settingsPending > 0 }
-                trash={ data.trash }
-                onRestore={ data.restoreTrash }
-                runMutation={ data.runMutation }
-            />
+        <>
             {
                 data.settingsPending > 0 && (
                     <p
@@ -744,6 +739,7 @@ export function PlannerPage() {
             {
                 showForm && (
                     <PlaceForm
+                        active={ active }
                         defaultSectionNames={ defaultSectionNames }
                         sectionId={ sectionId }
                         sections={ sections }
@@ -755,6 +751,6 @@ export function PlannerPage() {
                     />
                 )
             }
-        </PlannerLayout>
+        </>
     );
 }

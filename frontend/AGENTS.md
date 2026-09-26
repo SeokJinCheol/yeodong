@@ -148,7 +148,7 @@ npm run build:nginx
 
 ## 계정별 접근 제한
 
-- `AccountGate`가 인증된 계정을 확인한 뒤에만 `PlannerPage`를 마운트한다. `AccountPanel`/`useAccount`는 개인 기본값과 계정 UI를 담당한다.
+- `AccountGate`가 인증된 계정을 확인한 뒤에만 `WorkspacePage`와 하위 화면을 마운트한다. `AccountPanel`/`useAccount`는 개인 기본값과 계정 UI를 담당한다.
 - 세션 토큰은 HttpOnly 쿠키로만 전달한다. CSRF 토큰은 메모리에만 두고 localStorage에 자격 증명을 저장하지 않는다.
 - 여행 소유권은 모든 관련 API에서 서버가 검사한다. 프런트엔드의 여행 필터나 X-Account-ID는 서버 권한 검사의 대체물이 아니다.
 - 계정 전환 때 이전 계정의 지연된 요청·응답이 새 계정에 적용되지 않아야 한다. 로그인·로그아웃 시 전체 페이지를 다시 연다.
@@ -165,3 +165,11 @@ npm run build:nginx
 - 키는 `common.button.delete`, `common.status.saving`, `place.form.name`처럼 의미 있는 점 경로를 사용하고 중첩 JSON으로 정의한다. 동일한 의미의 버튼·상태·접근성 문구는 공통 키를 재사용한다.
 - 공백·조사·중괄호가 포함된 원문을 키로 사용하지 않는다. 문장 공백·기호·어순·보간은 번역 값에서 처리하고 호출부는 `t(key, { name, count })`처럼 값만 넘긴다. `value0` 같은 이름 없는 변수는 사용하지 않는다.
 - 키는 `TranslationKey` 타입으로 검사하고, 서버의 원문 오류를 직접 `t()`에 전달하지 않는다. `translateMessage()`를 거친다.
+
+
+## 설정 페이지와 내비게이션
+
+- `WorkspacePage`는 공통 `PlannerLayout`, 공유 `usePlannerData`, 화면 전환을 담당한다. `PlannerPage`는 전달받은 데이터를 일정 UI와 연결한다. 화면마다 별도의 `usePlannerData` 인스턴스를 만들지 않는다.
+- 언어·개인 기본값·여행·백업·휴지통은 `SettingsPage`에 둔다. 설정과 로그아웃 진입점은 헤더의 `ProfileMenu` 안에 둔다.
+- `usePageNavigation`의 해시 경로를 사용해 `/yeodong/` 서비스와 브라우저 뒤로·앞으로 이동을 지원한다.
+- 설정 왕복 시 여행 화면의 선택 상태와 계산 결과를 유지한다. 숨겨진 장소 폼의 전역 스크롤 잠금은 해제하되 작성 상태를 보존한다.

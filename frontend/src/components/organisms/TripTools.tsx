@@ -51,165 +51,158 @@ export function TripTools({
                     }
                 </select>
             </label>
-            <details>
-                <summary>
-                    {
-                        t('trip.tools.title')
-                    }
-                </summary>
-                <div className="trip-tools-panel">
-                    <form
-                        onSubmit={ (e) => {
-                            e.preventDefault();
-                            void tools.saveTrip(name, true);
-                        } }
-                    >
-                        <label>
-                            {
-                                t('trip.name')
-                            }
-                            <input
-                                aria-label={ t('trip.name') }
-                                value={ name }
-                                maxLength={ 80 }
-                                onChange={ (e) => setName(e.target.value) }
-                                placeholder={ t('trip.namePlaceholder') }
-                            />
-                        </label>
-                        <div className="tool-actions">
-                            <Button disabled={ disabled || !name.trim() }>
-                                {
-                                    t('trip.button.create')
-                                }
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                disabled={ disabled || !name.trim() }
-                                onClick={ () => void tools.saveTrip(name, false) }
-                            >
-                                {
-                                    t('trip.button.rename')
-                                }
-                            </Button>
-                        </div>
-                    </form>
+            <div className="trip-tools-panel">
+                <form
+                    onSubmit={ (e) => {
+                        e.preventDefault();
+                        void tools.saveTrip(name, true);
+                    } }
+                >
+                    <label>
+                        {
+                            t('trip.name')
+                        }
+                        <input
+                            aria-label={ t('trip.name') }
+                            value={ name }
+                            maxLength={ 80 }
+                            onChange={ (e) => setName(e.target.value) }
+                            placeholder={ t('trip.namePlaceholder') }
+                        />
+                    </label>
                     <div className="tool-actions">
+                        <Button disabled={ disabled || !name.trim() }>
+                            {
+                                t('trip.button.create')
+                            }
+                        </Button>
                         <Button
                             type="button"
                             variant="secondary"
-                            disabled={ disabled }
-                            onClick={ () => void tools.download() }
+                            disabled={ disabled || !name.trim() }
+                            onClick={ () => void tools.saveTrip(name, false) }
                         >
                             {
-                                t('backup.button.download')
+                                t('trip.button.rename')
                             }
                         </Button>
-                        <label className="backup-upload">
-                            {
-                                t('backup.button.import')
-                            }
-                            <input
-                                aria-label={ t('backup.fileLabel') }
-                                type="file"
-                                accept=".json,application/json"
-                                disabled={ disabled }
-                                onChange={ async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    await tools.importFile(file);
-                                    e.target.value = '';
-                                } }
-                            />
-                        </label>
                     </div>
-                    <p className="small muted">
+                </form>
+                <div className="tool-actions">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={ disabled }
+                        onClick={ () => void tools.download() }
+                    >
                         {
-                            t('backup.description')
+                            t('backup.button.download')
+                        }
+                    </Button>
+                    <label className="backup-upload">
+                        {
+                            t('backup.button.import')
+                        }
+                        <input
+                            aria-label={ t('backup.fileLabel') }
+                            type="file"
+                            accept=".json,application/json"
+                            disabled={ disabled }
+                            onChange={ async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                await tools.importFile(file);
+                                e.target.value = '';
+                            } }
+                        />
+                    </label>
+                </div>
+                <p className="small muted">
+                    {
+                        t('backup.description')
+                    }
+                </p>
+                {
+                    tools.error && (
+                        <p
+                            role="alert"
+                            className="error"
+                        >
+                            {
+                                translateMessage(tools.error)
+                            }
+                        </p>
+                    )
+                }
+                {
+                    tools.success && <p role="status">
+                        {
+                            translateMessage(tools.success)
                         }
                     </p>
+                }
+                <details className="trash-list">
+                    <summary>
+                        {
+                            t('trash.count', { count: trash.length })
+                        }
+                    </summary>
                     {
-                        tools.error && (
+                        trash.length === 0 && <p>
+                            {
+                                t('trash.empty')
+                            }
+                        </p>
+                    }
+                    {
+                        trash.map((item) => (
+                            <div
+                                className="trash-item"
+                                key={ item.id }
+                            >
+                                <span>
+                                    {
+                                        item.label
+                                    }
+                                    <small>
+                                        {
+                                            new Date(item.deleted_at).toLocaleString(locale())
+                                        }
+                                    </small>
+                                </span>
+                                <Button
+                                    variant="secondary"
+                                    disabled={ disabled }
+                                    onClick={ async () => {
+                                        setRestoreError('');
+                                        try {
+                                            await onRestore(item.id);
+                                        } catch (e) {
+                                            setRestoreError((e as Error).message);
+                                        }
+                                    } }
+                                >
+                                    {
+                                        t('common.button.restore')
+                                    }
+                                </Button>
+                            </div>
+                        ))
+                    }
+                    {
+                        restoreError && (
                             <p
                                 role="alert"
                                 className="error"
                             >
                                 {
-                                    translateMessage(tools.error)
+                                    translateMessage(restoreError)
                                 }
                             </p>
                         )
                     }
-                    {
-                        tools.success && <p role="status">
-                            {
-                                translateMessage(tools.success)
-                            }
-                        </p>
-                    }
-                    <details className="trash-list">
-                        <summary>
-                            {
-                                t('trash.count', { count: trash.length })
-                            }
-                        </summary>
-                        {
-                            trash.length === 0 && <p>
-                                {
-                                    t('trash.empty')
-                                }
-                            </p>
-                        }
-                        {
-                            trash.map((item) => (
-                                <div
-                                    className="trash-item"
-                                    key={ item.id }
-                                >
-                                    <span>
-                                        {
-                                            item.label
-                                        }
-                                        <small>
-                                            {
-                                                new Date(item.deleted_at).toLocaleString(locale())
-                                            }
-                                        </small>
-                                    </span>
-                                    <Button
-                                        variant="secondary"
-                                        disabled={ disabled }
-                                        onClick={ async () => {
-                                            setRestoreError('');
-                                            try {
-                                                await onRestore(item.id);
-                                            } catch (e) {
-                                                setRestoreError((e as Error).message);
-                                            }
-                                        } }
-                                    >
-                                        {
-                                            t('common.button.restore')
-                                        }
-                                    </Button>
-                                </div>
-                            ))
-                        }
-                        {
-                            restoreError && (
-                                <p
-                                    role="alert"
-                                    className="error"
-                                >
-                                    {
-                                        translateMessage(restoreError)
-                                    }
-                                </p>
-                            )
-                        }
-                    </details>
-                </div>
-            </details>
+                </details>
+            </div>
         </section>
     );
 }

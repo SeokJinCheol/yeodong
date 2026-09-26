@@ -29,141 +29,120 @@ export function AccountPanel() {
             className="account-panel"
             aria-label={ t('account.title') }
         >
-            <span>
-                {
-                    t('account.greeting', { name: account.user.display_name })
-                }
-            </span>
-            <details>
-                <summary>
-                    {
-                        t('account.preferences.title')
-                    }
-                </summary>
-                <form
-                    onSubmit={ (e) => {
-                        e.preventDefault();
-                        void act(async () => {
-                            await account.savePreferences(value);
-                            setMessage(t('account.preferences.saved'));
-                        });
-                    } }
-                >
-                    <p className="small muted">
-                        {
-                            t('account.preferences.description')
-                        }
-                    </p>
-                    <label>
-                        {
-                            t('account.preferences.departureTime')
-                        }
-                        <input
-                            type="time"
-                            required
-                            value={ value.departureTime }
-                            onChange={ (e) => setValue({ ...value, departureTime: e.target.value }) }
-                        />
-                    </label>
-                    <label>
-                        {
-                            t('account.preferences.timeZone')
-                        }
-                        <select
-                            value={ value.timeZone }
-                            onChange={ (e) => setValue({ ...value, timeZone: e.target.value }) }
-                        >
-                            <option value="Asia/Tokyo">
-                                {
-                                    t('common.timeZone.tokyo')
-                                }
-                            </option>
-                            <option value="Asia/Seoul">
-                                {
-                                    t('common.timeZone.seoul')
-                                }
-                            </option>
-                            <option value="Asia/Taipei">
-                                {
-                                    t('common.timeZone.taipei')
-                                }
-                            </option>
-                            <option value="Asia/Singapore">
-                                {
-                                    t('common.timeZone.singapore')
-                                }
-                            </option>
-                            <option value="Europe/Paris">
-                                {
-                                    t('common.timeZone.paris')
-                                }
-                            </option>
-                            <option value="Europe/London">
-                                {
-                                    t('common.timeZone.london')
-                                }
-                            </option>
-                            <option value="America/New_York">
-                                {
-                                    t('common.timeZone.newYork')
-                                }
-                            </option>
-                            <option value="America/Los_Angeles">
-                                {
-                                    t('common.timeZone.losAngeles')
-                                }
-                            </option>
-                        </select>
-                    </label>
-                    <label>
-                        {
-                            t('account.preferences.travelMode')
-                        }
-                        <select
-                            value={ value.mode }
-                            onChange={ (e) =>
-                                setValue({
-                                    ...value,
-                                    mode: e.target.value as RoutePreferences['mode'],
-                                })
-                            }
-                        >
-                            <option value="MAP">
-                                Map
-                            </option>
-                            <option value="WALK">
-                                {
-                                    t('route.mode.walk')
-                                }
-                            </option>
-                            <option value="DRIVE">
-                                {
-                                    t('route.mode.drive')
-                                }
-                            </option>
-                            <option value="TRANSIT">
-                                {
-                                    t('route.mode.transit')
-                                }
-                            </option>
-                        </select>
-                    </label>
-                    <Button disabled={ busy }>
-                        {
-                            t('account.preferences.save')
-                        }
-                    </Button>
-                </form>
-            </details>
-            <Button
-                variant="secondary"
-                disabled={ busy }
-                onClick={ () => void act(account.logout) }
+            <form
+                onSubmit={ (e) => {
+                    e.preventDefault();
+                    void act(async () => {
+                        await account.savePreferences(value);
+                        setMessage(t('account.preferences.saved'));
+                    });
+                } }
             >
-                {
-                    t('auth.button.logout')
-                }
-            </Button>
+                <p className="small muted">
+                    {
+                        t('account.preferences.description')
+                    }
+                </p>
+                <label>
+                    {
+                        t('account.preferences.departureTime')
+                    }
+                    <input
+                        type="time"
+                        required
+                        value={ value.departureTime }
+                        onChange={ (e) => setValue({ ...value, departureTime: e.target.value }) }
+                    />
+                </label>
+                <label>
+                    {
+                        t('account.preferences.timeZone')
+                    }
+                    <select
+                        value={ value.timeZone }
+                        onChange={ (e) => setValue({ ...value, timeZone: e.target.value }) }
+                    >
+                        <option value="Asia/Tokyo">
+                            {
+                                t('common.timeZone.tokyo')
+                            }
+                        </option>
+                        <option value="Asia/Seoul">
+                            {
+                                t('common.timeZone.seoul')
+                            }
+                        </option>
+                        <option value="Asia/Taipei">
+                            {
+                                t('common.timeZone.taipei')
+                            }
+                        </option>
+                        <option value="Asia/Singapore">
+                            {
+                                t('common.timeZone.singapore')
+                            }
+                        </option>
+                        <option value="Europe/Paris">
+                            {
+                                t('common.timeZone.paris')
+                            }
+                        </option>
+                        <option value="Europe/London">
+                            {
+                                t('common.timeZone.london')
+                            }
+                        </option>
+                        <option value="America/New_York">
+                            {
+                                t('common.timeZone.newYork')
+                            }
+                        </option>
+                        <option value="America/Los_Angeles">
+                            {
+                                t('common.timeZone.losAngeles')
+                            }
+                        </option>
+                    </select>
+                </label>
+                <label>
+                    {
+                        t('account.preferences.travelMode')
+                    }
+                    <select
+                        value={ value.mode }
+                        onChange={ (e) =>
+                            setValue({
+                                ...value,
+                                mode: e.target.value as RoutePreferences['mode'],
+                            })
+                        }
+                    >
+                        <option value="MAP">
+                            Map
+                        </option>
+                        <option value="WALK">
+                            {
+                                t('route.mode.walk')
+                            }
+                        </option>
+                        <option value="DRIVE">
+                            {
+                                t('route.mode.drive')
+                            }
+                        </option>
+                        <option value="TRANSIT">
+                            {
+                                t('route.mode.transit')
+                            }
+                        </option>
+                    </select>
+                </label>
+                <Button disabled={ busy }>
+                    {
+                        t('account.preferences.save')
+                    }
+                </Button>
+            </form>
             {
                 error && (
                     <p
