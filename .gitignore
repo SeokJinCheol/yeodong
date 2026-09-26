@@ -22,3 +22,6 @@ __pycache__/
 # Local Valhalla map data
 deploy/valhalla/data/
 deploy/valhalla/downloads/
+
+# First account bootstrap secret
+*.setup-token

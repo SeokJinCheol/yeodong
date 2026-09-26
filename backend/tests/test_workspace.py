@@ -20,6 +20,11 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(valhalla, 'time_matrix', matrix)
     monkeypatch.setattr(valhalla, 'route_details', route)
     with TestClient(app) as client:
+        from app.auth import setup_path
+        client.headers['X-Requested-With'] = 'yeodong'
+        session = client.post('/api/auth/register', json={'username':'testowner','password':'test-password-123','display_name':'테스트 사용자','setup_token':setup_path().read_text()})
+        assert session.status_code == 201, session.text
+        client.headers['X-CSRF-Token'] = session.json()['csrf']
         yield client
 
 

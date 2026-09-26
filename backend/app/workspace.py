@@ -55,6 +55,13 @@ def parse_key(key):
         raise HTTPException(422, '설정의 날짜 또는 구간이 올바르지 않습니다.') from None
 
 
+def default_settings():
+    from .auth import active_user
+    with db.connection(global_db=True) as conn:
+        row = conn.execute('SELECT preferences FROM users WHERE id=?',(active_user.get(),)).fetchone()
+    return RouteSettings(**(json.loads(row['preferences']) if row else {})).model_dump()
+
+
 def read_settings(conn):
     return {r['key']: json.loads(r['value']) for r in conn.execute('SELECT * FROM route_settings')}
 
@@ -83,22 +90,25 @@ def repair_settings(conn):
 
 @router.get('/trips')
 def trips():
+    from .auth import active_user
     with db.connection(global_db=True) as conn:
-        return [dict(r) for r in conn.execute('SELECT * FROM trips ORDER BY id')]
+        return [dict(r) for r in conn.execute('SELECT id,name FROM trips WHERE owner_id=? ORDER BY id', (active_user.get(),))]
 
 
 @router.post('/trips', status_code=201)
 def create_trip(payload: TripInput):
+    from .auth import active_user
     with db.connection(global_db=True) as conn:
-        trip_id = conn.execute('INSERT INTO trips (name) VALUES (?)', (payload.name.strip(),)).lastrowid
+        trip_id = conn.execute('INSERT INTO trips (name,owner_id) VALUES (?,?)', (payload.name.strip(),active_user.get())).lastrowid
         db.init_db(trip_id=trip_id, seed=False)
     return {'id': trip_id, 'name': payload.name.strip()}
 
 
 @router.put('/trips/{trip_id}')
 def rename_trip(trip_id: int, payload: TripInput):
+    from .auth import active_user
     with db.connection(global_db=True) as conn:
-        if not conn.execute('UPDATE trips SET name=? WHERE id=?', (payload.name.strip(), trip_id)).rowcount:
+        if not conn.execute('UPDATE trips SET name=? WHERE id=? AND owner_id=?', (payload.name.strip(), trip_id,active_user.get())).rowcount:
             raise HTTPException(404, '여행이 없습니다.')
     return {'id': trip_id, 'name': payload.name.strip()}
 
@@ -113,7 +123,7 @@ def get_route_settings():
 def save_route_settings(key: str, payload: RouteSettings):
     with db.connection() as conn:
         conn.execute('BEGIN IMMEDIATE')
-        previous = read_settings(conn).get(key, RouteSettings().model_dump())
+        previous = read_settings(conn).get(key, default_settings())
         value = RouteSettings.model_validate({**previous, **payload.model_dump(exclude_unset=True)}).model_dump()
         check_settings(conn, key, value)
         put_settings(conn, key, value)
@@ -148,7 +158,7 @@ def reorder(payload: OrderInput):
     with db.connection() as conn:
         conn.execute('BEGIN IMMEDIATE')
         key = section_key(payload.visit_date, payload.section_id)
-        value = read_settings(conn).get(key, RouteSettings().model_dump())
+        value = read_settings(conn).get(key, default_settings())
         value.update(start=payload.start_id, end=payload.end_id)
         check_settings(conn, key, value)
         expected = {r['id'] for r in conn.execute('SELECT id FROM places WHERE visit_date=? AND section_id IS ?',

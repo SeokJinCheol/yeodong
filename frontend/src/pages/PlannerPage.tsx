@@ -1,3 +1,4 @@
+import { AccountPanel } from '../components/organisms/AccountPanel';
 import { TripTools } from '../components/organisms/TripTools';
 import { ItineraryProgress } from '../components/organisms/ItineraryProgress';
 import { useEffect, useRef, useState } from 'react';
@@ -205,6 +206,7 @@ export function PlannerPage() {
         });
     return (
         <PlannerLayout>
+            <AccountPanel />
             <TripTools
                 busy={ mutating || busy || data.settingsPending > 0 }
                 trash={ data.trash }

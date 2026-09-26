@@ -1,3 +1,4 @@
+import { useAccount } from './useAccount';
 import type { Place, RoutePreferences } from '../lib/types';
 
 export function useRouteSettings(
@@ -7,7 +8,8 @@ export function useRouteSettings(
     preferences: Record<string, RoutePreferences>,
     save: (key: string, patch: Partial<RoutePreferences>) => Promise<unknown>,
 ) {
-    const defaults = { departureTime: '09:00', timeZone: 'Asia/Tokyo', mode: 'MAP' as const };
+    const { user } = useAccount();
+    const defaults = user.preferences;
     const key = sectionId === null ? date : `${date}:${sectionId}`;
     const selected = preferences[key];
     const dayPlaces = places.filter((p) => p.visit_date === date);

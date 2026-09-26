@@ -1,4 +1,5 @@
 import math
+import hmac
 import hashlib
 import time
 from datetime import date, datetime, timezone
@@ -11,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import db, geocoding, transit, scheduling, valhalla, workspace
 from .config import settings
+from . import auth
 from .models import AssignInput, CopyItineraryInput, MoveDayInput, Place, PlaceInput, PlanInput, TaskStatus, SectionInput
 from .routing import cluster_places
 
@@ -18,6 +20,7 @@ from .routing import cluster_places
 @asynccontextmanager
 async def lifespan(app):
     db.init_db()
+    auth.init_auth()
     yield
 
 
@@ -25,24 +28,50 @@ app = FastAPI(title='여동 · 여행 동선 API', version='0.1.0', lifespan=lif
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=['*'], allow_headers=['*'])
 
 app.include_router(workspace.router)
+app.include_router(auth.router)
 
 
 @app.middleware('http')
-async def trip_scope(request: Request, call_next):
-    try:
-        trip_id = int(request.headers.get('X-Trip-ID', '1'))
-    except ValueError:
-        return JSONResponse(status_code=422, content={'detail': '여행 ID가 올바르지 않습니다.'})
-    with db.connection(global_db=True) as conn:
-        if not conn.execute('SELECT 1 FROM trips WHERE id=?', (trip_id,)).fetchone():
-            return JSONResponse(status_code=404, content={'detail': '여행이 없습니다. 여행 목록을 다시 선택해 주세요.'})
-    token = db.active_trip.set(trip_id)
-    try:
-        if trip_id != 1:
-            db.init_db(trip_id=trip_id, seed=False)
+async def account_scope(request: Request, call_next):
+    path = request.url.path
+    public = path in {'/api/health', '/api/auth/status', '/api/auth/login', '/api/auth/register'}
+    if request.method == 'OPTIONS':
         return await call_next(request)
+    if request.method not in {'GET', 'HEAD'}:
+        origin = request.headers.get('origin')
+        allowed = {str(request.base_url).rstrip('/'), *settings.cors_origins}
+        if request.headers.get('X-Requested-With') != 'yeodong' or (origin and origin not in allowed):
+            return JSONResponse(status_code=403, content={'detail':'요청 출처를 확인할 수 없습니다.'})
+    user = auth.authenticate(request)
+    if not public and not user:
+        return JSONResponse(status_code=401, content={'detail':'로그인이 필요합니다.'})
+    if not public and request.method not in {'GET','HEAD'} and not hmac.compare_digest(request.headers.get('X-CSRF-Token','').encode(),user['csrf'].encode()):
+        return JSONResponse(status_code=403, content={'detail':'로그인 정보를 새로고침한 뒤 다시 시도해 주세요.'})
+    if not public and user and request.headers.get('X-Account-ID') not in (None, str(user['id'])):
+        return JSONResponse(status_code=401, content={'detail':'다른 계정으로 로그인되었습니다. 다시 로그인해 주세요.'})
+    request.state.user = user
+    user_token = auth.active_user.set(user['id'] if user else None)
+    trip_token = None
+    try:
+        if not public and not path.startswith('/api/auth/') and path != '/api/trips' and not path.startswith('/api/trips/'):
+            with db.connection(global_db=True) as conn:
+                raw = request.headers.get('X-Trip-ID')
+                try:
+                    trip_id = int(raw) if raw else conn.execute('SELECT id FROM trips WHERE owner_id=? ORDER BY id LIMIT 1',(user['id'],)).fetchone()['id']
+                except (ValueError,TypeError):
+                    return JSONResponse(status_code=422, content={'detail':'여행 ID가 올바르지 않습니다.'})
+                if not conn.execute('SELECT 1 FROM trips WHERE id=? AND owner_id=?',(trip_id,user['id'])).fetchone():
+                    return JSONResponse(status_code=404, content={'detail':'여행이 없습니다.'})
+            trip_token = db.active_trip.set(trip_id)
+            if trip_id != 1:
+                db.init_db(trip_id=trip_id, seed=False)
+        response = await call_next(request)
+        response.headers['Cache-Control'] = 'no-store'
+        return response
     finally:
-        db.active_trip.reset(token)
+        auth.active_user.reset(user_token)
+        if trip_token is not None:
+            db.active_trip.reset(trip_token)
 
 
 @app.get('/api/health')
@@ -277,7 +306,7 @@ def copy_itinerary(payload: CopyItineraryInput):
                                  (source, payload.section_id)))
         if not rows:
             raise HTTPException(404, '복사할 구간에 장소가 없습니다.')
-        original_settings = workspace.read_settings(conn).get(workspace.section_key(source, payload.section_id), workspace.RouteSettings().model_dump())
+        original_settings = workspace.read_settings(conn).get(workspace.section_key(source, payload.section_id), workspace.default_settings())
         source_start = payload.start_id or original_settings.get('start')
         source_end = payload.end_id or original_settings.get('end')
         ids = {row['id'] for row in rows}

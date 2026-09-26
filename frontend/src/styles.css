@@ -2650,3 +2650,77 @@ input[type='time']::-webkit-datetime-edit {
         width: max-content;
     }
 }
+
+.account-screen {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--page-bg, #f4f5ef);
+}
+.account-card {
+    width: min(100%, 420px);
+    display: grid;
+    gap: 16px;
+    padding: 28px;
+    background: white;
+    border: 1px solid #dfe4da;
+    border-radius: 20px;
+}
+.account-card h1,
+.account-card p {
+    margin: 0;
+}
+.account-card label,
+.account-panel label {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+}
+.account-card input,
+.account-panel input,
+.account-panel select {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+}
+.account-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+.account-panel details {
+    flex: 1;
+    min-width: 130px;
+}
+.account-panel summary {
+    cursor: pointer;
+}
+.account-panel form {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    margin-top: 8px;
+    border: 1px solid #dfe4da;
+    border-radius: 12px;
+    background: white;
+}
+.account-panel > p {
+    flex-basis: 100%;
+    margin: 0;
+}
+@media (max-width: 640px) {
+    .account-screen {
+        padding: 16px;
+    }
+    .account-card {
+        padding: 20px;
+    }
+    .account-panel {
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+}
