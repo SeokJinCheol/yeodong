@@ -1,0 +1,558 @@
+{
+    "account": {
+        "greeting": "{{name}}",
+        "preferences": {
+            "departureTime": "Default departure time",
+            "description": "Applies to itineraries without their own settings. Existing itinerary settings are preserved.",
+            "save": "Save defaults",
+            "saved": "Default settings saved.",
+            "timeZone": "Default time zone",
+            "title": "My defaults",
+            "travelMode": "Default travel mode"
+        },
+        "title": "My account",
+        "profile": {
+            "label": "Profile for {{name}}",
+            "menu": "Profile options"
+        }
+    },
+    "auth": {
+        "button": {
+            "backToLogin": "Back to login",
+            "createAccount": "Create account",
+            "login": "Log in",
+            "logout": "Log out",
+            "newAccount": "Create a new account"
+        },
+        "error": {
+            "expired": "Your session expired or the account changed. Please log in again.",
+            "invalidCredentials": "Incorrect username or password.",
+            "rateLimited": "Too many attempts. Try again in 15 minutes.",
+            "required": "Please log in.",
+            "setupCode": "Check the server setup code.",
+            "usernameUnavailable": "This username is unavailable."
+        },
+        "form": {
+            "displayName": "Display name",
+            "password": "Password",
+            "passwordPlaceholder": "At least 12 characters",
+            "setupCode": "Setup code",
+            "setupHint": "Enter the setup code from your server administrator. Existing trips will be linked to this account.",
+            "username": "Username",
+            "usernamePlaceholder": "3–40 letters, numbers, dots, underscores or hyphens"
+        },
+        "privacyNotice": "Trips and itineraries are saved privately to your account.",
+        "status": {
+            "loading": "Checking session…"
+        },
+        "title": {
+            "register": "Sign up",
+            "setup": "Create your first account"
+        }
+    },
+    "backup": {
+        "button": {
+            "download": "Download backup",
+            "import": "Import backup"
+        },
+        "description": "Back up this trip’s places, sections and settings. Importing preserves existing plans and adds a new section when dates overlap. Trash is not included.",
+        "error": {
+            "duplicateId": "The backup contains duplicate IDs.",
+            "endpointLimit": "Copying start and end points would exceed the 100-place limit.",
+            "invalidDefaultName": "Invalid default section name.",
+            "invalidEndpoints": "Invalid start or end point in settings.",
+            "invalidJson": "Select a valid JSON backup file.",
+            "invalidSection": "Invalid section in settings.",
+            "placeLimit": "Importing would exceed the 100-place limit. Create a new trip for this import.",
+            "placeSectionMismatch": "A place’s section or date does not match.",
+            "tooLarge": "Backup files must be 2 MB or smaller."
+        },
+        "fileLabel": "Backup JSON file",
+        "imported": "Backup imported. Select an itinerary from the date tabs above."
+    },
+    "brand": {
+        "avatar": "Y",
+        "footer": "Yeodong · Less wandering, more exploring.",
+        "name": "Yeodong",
+        "pageTitle": "Yeodong · Your own journey",
+        "planner": "Trip planner",
+        "tagline": "Connect your journey"
+    },
+    "calendar": {
+        "collapse": "Collapse ⌃",
+        "collapseLabel": "Collapse calendar",
+        "dayLabel": "{{date}}, planned stops: {{count}}",
+        "dayLabel_one": "{{date}}, planned stop: {{count}}",
+        "dayLabel_other": "{{date}}, planned stops: {{count}}",
+        "hint": "Dots mark dates with saved plans. Select a date to open its itinerary.",
+        "nextMonth": "Next month",
+        "plannedStops": "{{count}} planned stops",
+        "plannedStops_one": "{{count}} planned stop",
+        "plannedStops_other": "{{count}} planned stops",
+        "previousMonth": "Previous month",
+        "selectOtherDate": "Select another date",
+        "title": "Trip calendar",
+        "weekday": {
+            "friday": "Fri",
+            "monday": "Mon",
+            "saturday": "Sat",
+            "sunday": "Sun",
+            "thursday": "Thu",
+            "tuesday": "Tue",
+            "wednesday": "Wed"
+        }
+    },
+    "common": {
+        "accessibility": {
+            "delete": "Delete {{name}}",
+            "edit": "Edit {{name}}",
+            "moveDown": "Move {{name}} down",
+            "moveUp": "Move {{name}} up"
+        },
+        "button": {
+            "add": "Add",
+            "cancel": "Cancel",
+            "close": "Close",
+            "collapse": "Collapse",
+            "delete": "Delete",
+            "edit": "Edit",
+            "hideDetails": "Hide details",
+            "manage": "Manage",
+            "moveToTrash": "Move to trash",
+            "reconnect": "Reconnect",
+            "reload": "Reload",
+            "rename": "Rename",
+            "restore": "Restore",
+            "retry": "Try again",
+            "save": "Save",
+            "saveChanges": "Save changes",
+            "search": "Search",
+            "showDetails": "Show details",
+            "undo": "Undo"
+        },
+        "duration": {
+            "hours": "{{hours}} hr",
+            "hoursMinutes": "{{hours}} hr {{minutes}} min",
+            "minutes": "{{minutes}} min"
+        },
+        "error": {
+            "requestFailed": "Request failed ({{status}}). Check your input and server connection."
+        },
+        "label": {
+            "date": "Date",
+            "language": "Language",
+            "place": "Place",
+            "selected": "Selected",
+            "timeZone": "Time zone"
+        },
+        "status": {
+            "checking": "Checking…",
+            "copying": "Copying…",
+            "deleting": "Deleting…",
+            "saving": "Saving settings…",
+            "working": "Working…"
+        },
+        "timeZone": {
+            "london": "United Kingdom (London)",
+            "losAngeles": "United States (Los Angeles)",
+            "newYork": "United States (New York)",
+            "paris": "France (Paris)",
+            "seoul": "South Korea (Seoul)",
+            "singapore": "Singapore",
+            "taipei": "Taiwan (Taipei)",
+            "tokyo": "Japan (Tokyo)"
+        }
+    },
+    "course": {
+        "button": {
+            "addToDate": "Add to selected date"
+        },
+        "count": "{{count}} suggested courses",
+        "count_one": "{{count}} suggested course",
+        "count_other": "{{count}} suggested courses",
+        "description": "Unscheduled places are grouped into courses within 2.5 km.",
+        "empty": "Save places without a date to see suggested courses here.",
+        "error": {
+            "deletedPlace": "This course contains deleted places. Refresh the page."
+        },
+        "estimateNotice": "Course times are estimated from straight-line distances. Adding a course to your itinerary recalculates it using your travel mode.",
+        "summary": "{{count}} places · Walking estimate: {{travel}} · Stay: {{stay}}",
+        "summary_one": "{{count}} place · Walking estimate: {{travel}} · Stay: {{stay}}",
+        "summary_other": "{{count}} places · Walking estimate: {{travel}} · Stay: {{stay}}",
+        "title": "Nearby places, one journey"
+    },
+    "departure": {
+        "arrival": "Arrive at {{destination}} by {{time}}",
+        "deadline": "Leave here by {{time}}",
+        "estimatedDeadline": "Leave here by {{time}} (estimate)",
+        "lateNotice": "Your current plan leaves too late. Shorten an earlier stop or stay.",
+        "routeNotice": "Latest departure based on current travel times. Allow some extra time.",
+        "transitNotice": "Estimated from the current travel times. Service at this time is not guaranteed; change your departure time and check again."
+    },
+    "itinerary": {
+        "copy": {
+            "button": "Copy itinerary",
+            "dateAriaLabel": "Date for copied itinerary",
+            "dateLabel": "Copy to date",
+            "description": "Copy this section’s places, start and end points, notes, checklists, order and time settings. The original stays unchanged. Dates with existing plans receive a separate copied section.",
+            "title": "Copy selected section"
+        },
+        "dateLabel": "Trip date",
+        "deleteDay": {
+            "button": "Delete this day’s itinerary",
+            "description": "Move all {{sections}} sections and {{count}} places on {{date}} to the trash, including notes and checklists. You can restore them later. Other dates and unscheduled places are unchanged."
+        },
+        "deleted": "{{name}} deleted",
+        "dismissDeleted": "Dismiss deletion notice",
+        "error": {
+            "copyEndpoints": "Check the start and end points to copy.",
+            "copyLimit": "Copying would exceed the 100-place limit. Remove some saved places first.",
+            "dateOccupied": "This date already has an itinerary. Choose an empty date or change individual visit dates.",
+            "namedSectionExists": "This date already has a named section. Choose an empty date.",
+            "nothingToCopy": "This section has no places to copy.",
+            "nothingToMove": "No itinerary to move.",
+            "placesChanged": "Places have changed. Refresh and set the order again.",
+            "sameDate": "Choose a different date.",
+            "sectionsExist": "This date already has sections. Choose an empty date."
+        },
+        "move": {
+            "button": "Move itinerary",
+            "dateAriaLabel": "New itinerary date",
+            "dateLabel": "New date",
+            "description": "Move all sections and {{count}} places from {{date}}. Stay durations and arrival deadlines are preserved. The target date must have no existing itinerary.",
+            "title": "Move itinerary to another date"
+        },
+        "noDate": {
+            "description": "Select a date on the calendar, then add places.",
+            "title": "Choose a trip date first"
+        },
+        "order": {
+            "automatic": "Optimize with required stop order",
+            "description": "Use the arrows or drag to fix the order of intermediate stops. Change start and end points in itinerary settings.",
+            "manual": "Keep manual order",
+            "outOfRange": "There are {{count}} intermediate stops, but a required stop number exceeds this count. The order view uses the saved order. Edit the place to adjust its stop number.",
+            "outOfRange_one": "There is {{count}} intermediate stop, but a required stop number exceeds this count. The order view uses the saved order. Edit the place to adjust its stop number.",
+            "outOfRange_other": "There are {{count}} intermediate stops, but a required stop number exceeds this count. The order view uses the saved order. Edit the place to adjust its stop number.",
+            "reset": "Clear fixed order · Optimize",
+            "summary": "Edit stop order · {{mode}}"
+        },
+        "planDate": "Date to plan",
+        "progress": {
+            "completed": "Visited {{completed}} / {{total}}",
+            "finished": "No stops remaining.",
+            "label": "Trip progress",
+            "next": "Next: {{name}}"
+        },
+        "selectDate": "Select a trip date",
+        "settings": {
+            "hide": "Hide settings",
+            "title": "Itinerary settings"
+        }
+    },
+    "maps": {
+        "addPlaceHint": "Click or press and hold the map to add a place.",
+        "button": {
+            "addPlace": "Add a place here",
+            "openPlace": "Open in Google Maps",
+            "openRoute": "Open route ↗",
+            "openRouteLabel": "Open route"
+        },
+        "directionsMode": "Google directions · {{mode}}",
+        "export": {
+            "description": "Sends your planned stop order. Google Maps recalculates routes and travel times.",
+            "label": "Export itinerary",
+            "open": "Open itinerary in Google Maps",
+            "splitNotice": "The itinerary is split to keep every stop on mobile. Open the links in order."
+        },
+        "label": "Trip map",
+        "link": {
+            "directions": "Google directions from {{from}} to {{to}}",
+            "place": "Open {{name}} in Google Maps"
+        },
+        "loadError": "Could not load the map. Check your internet connection.",
+        "loading": "Loading map…",
+        "orderLegend": "Stop order · Dotted lines are not travel routes",
+        "orderNotice": "Map · Shows stop order and locations without requesting a route.",
+        "routeLegend": "Travel route calculated by Valhalla",
+        "selectedLocation": "Selected location",
+        "selectedPlace": "{{name}} · Selected place",
+        "title": "Today’s trip map"
+    },
+    "place": {
+        "checklist": {
+            "add": "+ Add checklist item",
+            "completeItem": "Complete checklist item {{number}}",
+            "deleteItem": "Delete checklist item {{number}}",
+            "item": "Checklist item {{number}}",
+            "placeholder": "Enter a checklist item",
+            "progress": "Checklist · {{completed}}/{{total}} complete",
+            "title": "Things to do here"
+        },
+        "count": "{{count}} places",
+        "count_one": "{{count}} place",
+        "count_other": "{{count}} places",
+        "error": {
+            "duplicateTaskId": "Checklist item IDs must be unique.",
+            "limit": "You can save up to 100 places.",
+            "notFound": "Place not found.",
+            "searchFailed": "Place search failed. Try again later or select a location on the map.",
+            "searchNotConfigured": "Place search is not configured. Select a location on the map.",
+            "searchTooShort": "Enter at least two characters for the place name.",
+            "taskNotFound": "Checklist item not found. Refresh the list."
+        },
+        "fixedStep": "STEP {{step}} fixed",
+        "form": {
+            "addTitle": "Where would you like to go?",
+            "address": "Address",
+            "area": "Area",
+            "areaPlaceholder": "Shinjuku",
+            "automaticOrder": "Automatic",
+            "clearRequiredOrder": "Clear required order",
+            "clearRequiredTime": "Clear required time",
+            "editTitle": "Edit place and schedule",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "mapPositionNotice": "Location selected on the map. Enter a place name to save it.",
+            "name": "Place name",
+            "namePlaceholder": "Name of the place to visit",
+            "notes": "Place notes",
+            "notesPlaceholder": "Add recommended dishes, booking details or notes for your visit.",
+            "requiredOrder": "Required stop order (optional)",
+            "requiredOrderHint": "Fix this place to a stop number, such as 3 for STEP 03. Unspecified stops fill the remaining slots. Numbers must be unique and within the number of intermediate stops. Start and end points always stay first and last.",
+            "requiredTime": "Required arrival time (optional)",
+            "requiredTimeHint": "For example, be here at 12:00. Early arrivals wait until this time before the stay begins. Uses the visit date and destination time zone.",
+            "save": "Save place",
+            "stayMinutes": "Stay duration (minutes)",
+            "unscheduled": "Save without a date",
+            "visitDate": "Visit date"
+        },
+        "requiredOrder": "Required order {{order}}",
+        "saved": {
+            "all": "All places",
+            "empty": "No places match your filters.",
+            "filterLabel": "Filter saved places",
+            "scheduled": "Scheduled",
+            "searchLabel": "Search saved places",
+            "searchPlaceholder": "Search name, area or address",
+            "title": "Manage saved places",
+            "unscheduled": "Unscheduled"
+        },
+        "savedName": "Saved place",
+        "search": {
+            "attribution": "Search data: ©",
+            "description": "Search for a place or select a location on the map. Try its local name or enter coordinates if you cannot find it.",
+            "label": "Search places",
+            "placeholder": "Search city and place · e.g. Tokyo Pan Maison"
+        },
+        "stayDuration": "{{duration}} stay",
+        "visitDateLabel": "Visit date for {{name}}",
+        "visitStatus": {
+            "label": "Visit status for {{name}}",
+            "pending": "Planned",
+            "skip": "Skip",
+            "skipped": "Skipped",
+            "visited": "Visited"
+        }
+    },
+    "planner": {
+        "intro": {
+            "description": "Spend less time planning routes and more time making the trip your own.",
+            "firstLine": "Collect the places you love,",
+            "secondLine": "let the journey unfold"
+        },
+        "shortcuts": {
+            "add": "Add itinerary",
+            "calendar": "Show calendar",
+            "label": "Trip shortcuts",
+            "map": "Show map",
+            "steps": "Show steps"
+        }
+    },
+    "route": {
+        "advice": {
+            "exportHint": "Calculate walking or driving routes, then open them in Google Maps.",
+            "recalculateHint": "Adding a place recalculates your itinerary while keeping the start and end points.",
+            "title": "Make room to enjoy the journey"
+        },
+        "button": {
+            "recalculate": "Recalculate route",
+            "recalculateRemaining": "Recalculate remaining stops",
+            "recalculateTime": "Recalculate with updated time",
+            "showAll": "Show full itinerary"
+        },
+        "cache": {
+            "calculated": "Calculated and saved route",
+            "hint": "Routes are reused for 24 hours. Select Recalculate route for the latest result.",
+            "saved": "Saved route"
+        },
+        "empty": {
+            "addPlaces": "Add places for this date or choose start and end points.",
+            "startHint": "Add places to start your journey"
+        },
+        "error": {
+            "disconnected": "Could not connect all places. Check your stops and travel mode.",
+            "endpointsOutsideSection": "The start or end point is not in this section.",
+            "incompleteMatrix": "Valhalla returned an incomplete travel-time matrix.",
+            "incompleteSegments": "Valhalla returned incomplete route segments.",
+            "noRoute": "Valhalla could not find a connecting route. Check your stops and travel mode.",
+            "notConfigured": "Configure the Valhalla server address (VALHALLA_URL).",
+            "requestFailed": "Valhalla route request failed. Check the server address, map data and connection.",
+            "selectEndpoints": "Select your start and end points again.",
+            "stopLimit": "Each section supports up to 8 intermediate stops. Split them across sections or dates."
+        },
+        "label": {
+            "arrival": "Arrival",
+            "roundTrip": "Start / End",
+            "start": "Start"
+        },
+        "mode": {
+            "drive": "Driving",
+            "label": "Travel mode",
+            "transit": "Transit",
+            "walk": "Walking"
+        },
+        "order": {
+            "departureBased": "Suggested order for departure time",
+            "feasible": "Order meets time constraints",
+            "infeasible": "Time constraints not met"
+        },
+        "orderOnlyHint": "Your places are saved. Review the stop order and map markers below. Travel times and arrival deadlines have not been calculated.",
+        "settings": {
+            "departureTime": "Departure time",
+            "end": "End point",
+            "manualRecalculationHint": "Changing the time zone or departure time does not recalculate the route automatically. Select Recalculate route to apply changes.",
+            "selectEnd": "Select end point",
+            "selectStart": "Select start point",
+            "start": "Start point",
+            "swapEndpoints": "Swap start and end points",
+            "timeChanged": "Time settings have changed. This route still uses the previous settings.",
+            "timeZone": "Destination time zone"
+        },
+        "stats": {
+            "distance": "Travel distance",
+            "elapsedTime": "Travel + waiting + stays",
+            "scheduleSummary": "Wait {{wait}} · Final arrival: {{arrival}}",
+            "travelTime": "Travel time"
+        },
+        "status": {
+            "calculating": "Calculating your itinerary…",
+            "enabled": "Valhalla routing enabled",
+            "mapOrder": "Map · Saved stop order",
+            "optimizing": "Finding the shortest route",
+            "setupRequired": "Valhalla server setup required",
+            "summary": "{{count}} stops · {{description}}",
+            "summary_one": "{{count}} stop · {{description}}",
+            "summary_other": "{{count}} stops · {{description}}",
+            "unavailable": "{{mode}} unavailable: {{reason}}"
+        },
+        "stopOrder": "Stop order",
+        "segmentSummary": "{{mode}} · {{distance}} km"
+    },
+    "schedule": {
+        "error": {
+            "disconnectedOrder": "No route can connect the stops in the required order.",
+            "duplicateOrder": "Required stop numbers must be unique. Assign a different number to each intermediate stop."
+        },
+        "infeasible": {
+            "description": "Adjust departure time, stay durations or stops. The displayed route does not meet your time constraints.",
+            "title": "This itinerary cannot meet the required times"
+        },
+        "label": {
+            "late": "Late"
+        },
+        "late": "{{name}}: arrival is {{minutes}} min after the required time of {{time}}.",
+        "orderRange": "This itinerary has {{count}} intermediate stops. Required stop numbers must be between 1 and {{count}}.",
+        "requiredTime": "Required {{time}}",
+        "waitDuration": "Wait {{duration}}",
+        "arrivalAt": "Arrival {{time}}",
+        "departureAt": "Departure {{time}}",
+        "lateDuration": "Late by {{duration}}"
+    },
+    "section": {
+        "button": {
+            "add": "Add section",
+            "addPlace": "Add place to this section",
+            "delete": "Delete section"
+        },
+        "dailyLabel": "Daily itinerary sections",
+        "defaultName": "Default section",
+        "deleteDescription": "Delete section {{name}}? Keep its {{count}} places and move them to “{{target}}” on the same date.",
+        "description": "Each section has its own stops, start and end points, and route. Edit a place to move it between sections.",
+        "error": {
+            "dateNotFound": "No section found for the selected date.",
+            "notFound": "Section not found.",
+            "selectDateSection": "Select a section on the selected date."
+        },
+        "label": "Itinerary section",
+        "manageLabel": "Manage sections",
+        "name": "Section name",
+        "namePlaceholder": "e.g. Morning, afternoon, evening"
+    },
+    "settings": {
+        "error": {
+            "invalidDateSection": "Invalid date or section in settings.",
+            "invalidPreferences": "Invalid time zone or travel mode.",
+            "invalidTimeZone": "Select a valid time zone.",
+            "save": "Could not save settings: {{message}}"
+        },
+        "page": {
+            "title": "Settings",
+            "back": "Back to planner",
+            "description": "Manage your language, personal defaults and trips."
+        }
+    },
+    "transit": {
+        "button": {
+            "find": "Find transit ↗"
+        },
+        "error": {
+            "unsupported": "Valhalla does not support transit optimization. Check transit using the Google Maps links between stops."
+        },
+        "fallback": {
+            "description": "Transit optimization is not supported by Valhalla. These stops follow your required order and have not been optimized. Set your departure date and time in Google Maps.",
+            "googleHint": "Check transit using Google directions between stops. Set your departure date and time in Google Maps.",
+            "title": "Check transit in Google Maps"
+        },
+        "headsign": "Toward {{destination}}",
+        "ride": "Board {{departure}} · Alight {{arrival}}",
+        "rideWithStops": "Board {{departure}} · Alight {{arrival}} · {{count}} stops",
+        "rideWithStops_one": "Board {{departure}} · Alight {{arrival}} · {{count}} stop",
+        "rideWithStops_other": "Board {{departure}} · Alight {{arrival}} · {{count}} stops",
+        "scheduleNotice": "{{optimization}}. Travel time includes walking, waiting and transfers. Service schedules may change.",
+        "timeRange": "Depart {{departure}} → Arrive {{arrival}}",
+        "timeUnavailable": "Time unavailable",
+        "transfers": "Transfers: {{count}}",
+        "walkInstruction": "Walk to the boarding point or next stop",
+        "walkOnly": "Walking only",
+        "walkSummary": "Walk {{duration}} · {{distance}} m"
+    },
+    "trash": {
+        "count": "Trash · {{count}} items",
+        "count_one": "Trash · {{count}} item",
+        "count_other": "Trash · {{count}} items",
+        "empty": "No deleted itineraries.",
+        "error": {
+            "duplicatePlaceId": "A place with the same ID already exists. Restore cancelled.",
+            "notFound": "No item to restore.",
+            "placeLimit": "Restoring would exceed the 100-place limit. Import into another trip or remove some places."
+        }
+    },
+    "trip": {
+        "button": {
+            "create": "Create trip",
+            "rename": "Rename current trip"
+        },
+        "current": "Current trip",
+        "error": {
+            "notFound": "Trip not found."
+        },
+        "label": "Trip",
+        "loading": "Loading trip information.",
+        "manageLabel": "Manage trips",
+        "name": "Trip name",
+        "namePlaceholder": "e.g. Autumn in Tokyo",
+        "tools": {
+            "title": "Trips, backups and trash"
+        }
+    }
+}

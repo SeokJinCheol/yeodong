@@ -1,0 +1,558 @@
+{
+    "account": {
+        "greeting": "{{name}} 님",
+        "preferences": {
+            "departureTime": "기본 출발 시각",
+            "description": "별도 설정이 없는 일정에 적용합니다. 이미 저장한 일정 설정은 유지됩니다.",
+            "save": "기본 설정 저장",
+            "saved": "기본 설정을 저장했습니다.",
+            "timeZone": "기본 시간대",
+            "title": "내 기본 설정",
+            "travelMode": "기본 이동수단"
+        },
+        "title": "내 계정",
+        "profile": {
+            "label": "{{name}} 프로필",
+            "menu": "프로필 메뉴"
+        }
+    },
+    "auth": {
+        "button": {
+            "backToLogin": "로그인으로 돌아가기",
+            "createAccount": "계정 만들기",
+            "login": "로그인",
+            "logout": "로그아웃",
+            "newAccount": "새 계정 만들기"
+        },
+        "error": {
+            "expired": "로그인이 만료되었거나 다른 계정으로 변경되었습니다. 다시 로그인해 주세요.",
+            "invalidCredentials": "아이디 또는 비밀번호가 올바르지 않습니다.",
+            "rateLimited": "시도가 너무 많습니다. 15분 후 다시 시도해 주세요.",
+            "required": "로그인이 필요합니다.",
+            "setupCode": "서버의 초기 설정 코드를 확인해 주세요.",
+            "usernameUnavailable": "사용할 수 없는 아이디입니다."
+        },
+        "form": {
+            "displayName": "표시 이름",
+            "password": "비밀번호",
+            "passwordPlaceholder": "12자 이상",
+            "setupCode": "초기 설정 코드",
+            "setupHint": "서버 관리자에게 받은 초기 설정 코드를 입력하세요. 기존 여행은 이 계정에 연결됩니다.",
+            "username": "아이디",
+            "usernamePlaceholder": "영문·숫자·점·밑줄·하이픈 3~40자"
+        },
+        "privacyNotice": "여행과 일정은 로그인한 계정에만 저장됩니다.",
+        "status": {
+            "loading": "로그인 확인 중…"
+        },
+        "title": {
+            "register": "회원가입",
+            "setup": "첫 계정 만들기"
+        }
+    },
+    "backup": {
+        "button": {
+            "download": "백업 내려받기",
+            "import": "백업 가져오기"
+        },
+        "description": "현재 여행의 장소·구간·설정을 백업합니다. 가져오기는 기존 일정을 유지하고, 날짜가 겹치면 새 구간에 추가합니다. 휴지통은 백업에 포함되지 않습니다.",
+        "error": {
+            "duplicateId": "백업에 중복 ID가 있습니다.",
+            "endpointLimit": "출발·도착지 복사 후 장소가 100개를 초과합니다.",
+            "invalidDefaultName": "기본 구간 이름이 올바르지 않습니다.",
+            "invalidEndpoints": "설정의 출발·도착지가 올바르지 않습니다.",
+            "invalidJson": "올바른 JSON 백업 파일을 선택해 주세요.",
+            "invalidSection": "설정의 구간이 올바르지 않습니다.",
+            "placeLimit": "가져온 후 장소가 100개를 초과합니다. 새 여행을 만들어 가져와 주세요.",
+            "placeSectionMismatch": "장소의 구간 또는 날짜가 일치하지 않습니다.",
+            "tooLarge": "백업 파일은 2MB 이하만 가져올 수 있습니다."
+        },
+        "fileLabel": "백업 JSON 파일",
+        "imported": "백업을 가져왔습니다. 상단 날짜 탭에서 일정을 선택하세요."
+    },
+    "brand": {
+        "avatar": "여",
+        "footer": "여동 · 더 적게 헤매고, 더 많이 여행하세요.",
+        "name": "여동",
+        "pageTitle": "여동 · 나만의 여행",
+        "planner": "여행 플래너",
+        "tagline": "여행의 동선을 잇다"
+    },
+    "calendar": {
+        "collapse": "접기 ⌃",
+        "collapseLabel": "달력 접기",
+        "dayLabel": "{{date}}, {{count}}개 장소 방문 예정",
+        "dayLabel_one": "{{date}}, {{count}}개 장소 방문 예정",
+        "dayLabel_other": "{{date}}, {{count}}개 장소 방문 예정",
+        "hint": "점이 있는 날짜에는 저장된 일정이 있습니다. 날짜를 누르면 해당 일정이 열립니다.",
+        "nextMonth": "다음 달",
+        "plannedStops": "{{count}}개 장소 방문 예정",
+        "plannedStops_one": "{{count}}개 장소 방문 예정",
+        "plannedStops_other": "{{count}}개 장소 방문 예정",
+        "previousMonth": "이전 달",
+        "selectOtherDate": "다른 날짜 선택",
+        "title": "여행 일정 달력",
+        "weekday": {
+            "friday": "금",
+            "monday": "월",
+            "saturday": "토",
+            "sunday": "일",
+            "thursday": "목",
+            "tuesday": "화",
+            "wednesday": "수"
+        }
+    },
+    "common": {
+        "accessibility": {
+            "delete": "{{name}} 삭제",
+            "edit": "{{name}} 수정",
+            "moveDown": "{{name}} 아래로",
+            "moveUp": "{{name}} 위로"
+        },
+        "button": {
+            "add": "추가",
+            "cancel": "취소",
+            "close": "닫기",
+            "collapse": "접기",
+            "delete": "삭제",
+            "edit": "수정",
+            "hideDetails": "상세 접기",
+            "manage": "관리",
+            "moveToTrash": "휴지통으로 이동",
+            "reconnect": "다시 연결",
+            "reload": "다시 불러오기",
+            "rename": "이름 변경",
+            "restore": "복구",
+            "retry": "다시 시도",
+            "save": "저장",
+            "saveChanges": "수정 저장하기",
+            "search": "검색",
+            "showDetails": "상세 보기",
+            "undo": "실행 취소"
+        },
+        "duration": {
+            "hours": "{{hours}}시간",
+            "hoursMinutes": "{{hours}}시간 {{minutes}}분",
+            "minutes": "{{minutes}}분"
+        },
+        "error": {
+            "requestFailed": "요청을 처리하지 못했습니다 ({{status}}). 입력값과 서버 연결을 확인해 주세요."
+        },
+        "label": {
+            "date": "날짜",
+            "language": "언어",
+            "place": "장소",
+            "selected": "선택",
+            "timeZone": "시간대"
+        },
+        "status": {
+            "checking": "확인 중…",
+            "copying": "복사 중…",
+            "deleting": "삭제 중…",
+            "saving": "설정 저장 중…",
+            "working": "처리 중…"
+        },
+        "timeZone": {
+            "london": "영국 (런던)",
+            "losAngeles": "미국 (LA)",
+            "newYork": "미국 (뉴욕)",
+            "paris": "프랑스 (파리)",
+            "seoul": "한국 (서울)",
+            "singapore": "싱가포르",
+            "taipei": "대만 (타이베이)",
+            "tokyo": "일본 (도쿄)"
+        }
+    },
+    "course": {
+        "button": {
+            "addToDate": "선택한 날짜에 담기"
+        },
+        "count": "{{count}}개의 추천 코스",
+        "count_one": "{{count}}개의 추천 코스",
+        "count_other": "{{count}}개의 추천 코스",
+        "description": "날짜를 정하지 않은 장소를 2.5 km 이내의 코스로 묶었어요.",
+        "empty": "날짜 미정으로 장소를 저장하면 추천 코스가 여기에 나타나요.",
+        "error": {
+            "deletedPlace": "코스에 삭제된 장소가 있습니다. 새로고침해 주세요."
+        },
+        "estimateNotice": "추천 코스의 시간은 직선거리 기반 추정치입니다. 일정에 담으면 선택한 이동수단으로 다시 계산합니다.",
+        "summary": "{{count}}개 장소 · 도보 약 {{travel}} · 머무르기 {{stay}}",
+        "summary_one": "{{count}}개 장소 · 도보 약 {{travel}} · 머무르기 {{stay}}",
+        "summary_other": "{{count}}개 장소 · 도보 약 {{travel}} · 머무르기 {{stay}}",
+        "title": "가까운 장소끼리, 하나의 여행"
+    },
+    "departure": {
+        "arrival": "{{destination}}에 {{time}} 도착 기준",
+        "deadline": "{{time}}까지 이곳에서 출발",
+        "estimatedDeadline": "{{time}}까지 이곳에서 출발 (참고 시각)",
+        "lateNotice": "현재 일정은 출발 마감보다 늦습니다. 이전 일정이나 머무르기 시간을 줄여 주세요.",
+        "routeNotice": "현재 구간 소요시간으로 계산한 출발 마감 시각입니다. 여유 있게 출발하세요.",
+        "transitNotice": "현재 조회한 구간 시간으로 역산한 값입니다. 이 시각의 운행을 보장하지 않으므로 출발 시각을 변경해 다시 조회하세요."
+    },
+    "itinerary": {
+        "copy": {
+            "button": "일정 복사하기",
+            "dateAriaLabel": "일정 복사할 날짜",
+            "dateLabel": "복사할 날짜",
+            "description": "현재 구간의 장소와 출발·도착지, 메모·체크리스트, 순서·시간 설정을 복사합니다. 원본은 유지하며, 이미 일정이 있는 날짜에는 ‘복사된 일정’ 구간으로 추가합니다.",
+            "title": "선택한 구간 복사"
+        },
+        "dateLabel": "여행 날짜",
+        "deleteDay": {
+            "button": "이 날짜 일정 전체 삭제",
+            "description": "{{date}}의 모든 구간 {{sections}}개와 장소 {{count}}개를 휴지통으로 옮깁니다. 메모와 할 일도 보관되며 복구할 수 있습니다. 다른 날짜와 날짜 미정 장소는 유지됩니다."
+        },
+        "deleted": "{{name}} 삭제됨",
+        "dismissDeleted": "삭제 알림 닫기",
+        "error": {
+            "copyEndpoints": "복사할 출발지 또는 도착지를 확인해 주세요.",
+            "copyLimit": "복사 후 장소가 100개를 초과합니다. 저장한 장소를 정리해 주세요.",
+            "dateOccupied": "이미 일정이 있는 날짜입니다. 빈 날짜를 선택하거나 장소별 날짜를 수정해 주세요.",
+            "namedSectionExists": "이미 이름을 지정한 구간이 있는 날짜입니다. 빈 날짜를 선택해 주세요.",
+            "nothingToCopy": "복사할 구간에 장소가 없습니다.",
+            "nothingToMove": "옮길 일정이 없습니다.",
+            "placesChanged": "장소가 변경되었습니다. 새로고침 후 순서를 다시 정해 주세요.",
+            "sameDate": "변경할 날짜를 다르게 선택해 주세요.",
+            "sectionsExist": "이미 구간이 있는 날짜입니다. 빈 날짜를 선택해 주세요."
+        },
+        "move": {
+            "button": "일정 옮기기",
+            "dateAriaLabel": "일정 변경할 날짜",
+            "dateLabel": "변경할 날짜",
+            "description": "{{date}}의 모든 구간과 장소 {{count}}개를 함께 옮깁니다. 머무르기 시간과 필수 도착 시각은 유지됩니다. 이미 일정이 있는 날짜로는 옮길 수 없습니다.",
+            "title": "일정 날짜 변경"
+        },
+        "noDate": {
+            "description": "달력에서 날짜를 선택한 뒤 장소를 추가하세요.",
+            "title": "여행 날짜를 먼저 지정해 주세요"
+        },
+        "order": {
+            "automatic": "자동 최적화 / 필수 순서 반영",
+            "description": "위·아래 버튼 또는 드래그로 중간 방문 순서를 고정합니다. 출발·도착지는 일정 설정에서 변경하세요.",
+            "manual": "수동 순서 유지",
+            "outOfRange": "중간 방문지는 {{count}}곳인데 그보다 큰 필수 STEP 번호가 있습니다. 순서 보기에서는 등록 순서로 배치합니다. 장소 수정에서 STEP 번호를 조정해 주세요.",
+            "outOfRange_one": "중간 방문지는 {{count}}곳인데 그보다 큰 필수 STEP 번호가 있습니다. 순서 보기에서는 등록 순서로 배치합니다. 장소 수정에서 STEP 번호를 조정해 주세요.",
+            "outOfRange_other": "중간 방문지는 {{count}}곳인데 그보다 큰 필수 STEP 번호가 있습니다. 순서 보기에서는 등록 순서로 배치합니다. 장소 수정에서 STEP 번호를 조정해 주세요.",
+            "reset": "고정 순서 해제 · 자동 최적화",
+            "summary": "STEP 순서 편집 · {{mode}}"
+        },
+        "planDate": "계획할 날짜",
+        "progress": {
+            "completed": "방문 완료 {{completed}} / {{total}}",
+            "finished": "남은 방문지가 없습니다.",
+            "label": "여행 진행 상황",
+            "next": "다음: {{name}}"
+        },
+        "selectDate": "여행 날짜를 선택해 주세요",
+        "settings": {
+            "hide": "설정 접기",
+            "title": "일정 설정"
+        }
+    },
+    "maps": {
+        "addPlaceHint": "지도를 클릭하거나 길게 눌러 장소를 추가하세요.",
+        "button": {
+            "addPlace": "이 위치에 장소 추가",
+            "openPlace": "Google 지도에서 열기",
+            "openRoute": "동선 열기 ↗",
+            "openRouteLabel": "동선 열기"
+        },
+        "directionsMode": "Google 길찾기 · {{mode}}",
+        "export": {
+            "description": "계산된 방문 순서를 전달합니다. 실제 경로와 소요시간은 Google 지도에서 다시 계산됩니다.",
+            "label": "완성된 동선 내보내기",
+            "open": "Google 지도에서 동선 열기",
+            "splitNotice": "모바일에서도 경유지가 빠지지 않도록 동선을 나누었습니다. 번호 순서대로 열어 주세요."
+        },
+        "label": "여행 지도",
+        "link": {
+            "directions": "{{from}}에서 {{to}}까지 Google 길찾기",
+            "place": "{{name}} Google 지도에서 열기"
+        },
+        "loadError": "배경 지도를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.",
+        "loading": "지도 불러오는 중…",
+        "orderLegend": "방문 순서 표시 · 점선은 실제 이동 경로가 아닙니다",
+        "orderNotice": "Map · 방문 순서와 위치만 표시합니다. 경로 API는 조회하지 않습니다.",
+        "routeLegend": "Valhalla로 계산한 실제 이동 경로",
+        "selectedLocation": "선택한 위치",
+        "selectedPlace": "{{name}} · 선택한 장소",
+        "title": "오늘의 여행 지도"
+    },
+    "place": {
+        "checklist": {
+            "add": "+ 할 일 추가",
+            "completeItem": "할 일 {{number}} 완료",
+            "deleteItem": "할 일 {{number}} 삭제",
+            "item": "할 일 {{number}}",
+            "placeholder": "할 일을 입력하세요",
+            "progress": "할 일 · {{completed}}/{{total}} 완료",
+            "title": "이 장소에서 할 일"
+        },
+        "count": "{{count}}개 장소",
+        "count_one": "{{count}}개 장소",
+        "count_other": "{{count}}개 장소",
+        "error": {
+            "duplicateTaskId": "할 일 ID가 중복됩니다.",
+            "limit": "초안에서는 최대 100개 장소를 저장할 수 있습니다.",
+            "notFound": "장소가 없습니다.",
+            "searchFailed": "장소 검색에 실패했습니다. 잠시 후 다시 시도하거나 지도에서 위치를 선택해 주세요.",
+            "searchNotConfigured": "장소 검색 서버가 설정되지 않았습니다. 지도에서 위치를 선택해 주세요.",
+            "searchTooShort": "장소 이름을 두 글자 이상 입력해 주세요.",
+            "taskNotFound": "할 일이 없습니다. 목록을 새로고침해 주세요."
+        },
+        "fixedStep": "STEP {{step}} 고정",
+        "form": {
+            "addTitle": "어디에 가고 싶으세요?",
+            "address": "주소",
+            "area": "지역",
+            "areaPlaceholder": "신주쿠",
+            "automaticOrder": "자동 배치",
+            "clearRequiredOrder": "필수 순서 해제",
+            "clearRequiredTime": "필수 시각 해제",
+            "editTitle": "장소와 일정 수정",
+            "latitude": "위도",
+            "longitude": "경도",
+            "mapPositionNotice": "지도에서 선택한 위치입니다. 장소 이름을 입력해 저장하세요.",
+            "name": "장소 이름",
+            "namePlaceholder": "방문할 장소 이름",
+            "notes": "장소 설명",
+            "notesPlaceholder": "추천 메뉴, 예약 정보, 방문 시 참고할 내용을 적어 주세요.",
+            "requiredOrder": "필수 방문 순서 (선택)",
+            "requiredOrderHint": "입력한 숫자의 STEP에 고정합니다. 예: 3을 입력하면 STEP 03입니다. 비워 둔 장소는 남은 자리에 자동 배치됩니다. 중간 방문지 수보다 큰 숫자나 중복 숫자는 사용할 수 없습니다. 출발·도착지는 항상 처음·마지막이며 이 숫자는 중간 방문지에만 적용됩니다.",
+            "requiredTime": "필수 도착 시각 (선택)",
+            "requiredTimeHint": "예: 12:00에 이곳에 있어야 해요. 일찍 도착하면 이 시각까지 기다린 뒤 머무르기 시간이 시작됩니다. 방문 날짜·여행지 시간대 기준입니다.",
+            "save": "장소 저장하기",
+            "stayMinutes": "머무는 시간 (분)",
+            "unscheduled": "날짜 미정으로 저장하기",
+            "visitDate": "방문 날짜"
+        },
+        "requiredOrder": "필수 순서 {{order}}",
+        "saved": {
+            "all": "전체 장소",
+            "empty": "조건에 맞는 장소가 없습니다.",
+            "filterLabel": "저장 장소 필터",
+            "scheduled": "날짜 지정",
+            "searchLabel": "저장 장소 검색",
+            "searchPlaceholder": "이름·지역·주소 검색",
+            "title": "저장한 장소 관리",
+            "unscheduled": "날짜 미정"
+        },
+        "savedName": "등록한 장소",
+        "search": {
+            "attribution": "검색 데이터: ©",
+            "description": "장소를 검색하거나 지도에서 위치를 선택하세요. 검색되지 않으면 현지어 이름으로 시도하거나 좌표를 직접 입력할 수 있어요.",
+            "label": "장소 검색",
+            "placeholder": "도시와 장소 검색 · 예: 도쿄 팡메종"
+        },
+        "stayDuration": "{{duration}} 머무르기",
+        "visitDateLabel": "{{name}} 방문 날짜",
+        "visitStatus": {
+            "label": "{{name}} 방문 상태",
+            "pending": "방문 예정",
+            "skip": "건너뛰기",
+            "skipped": "건너뜀",
+            "visited": "방문 완료"
+        }
+    },
+    "planner": {
+        "intro": {
+            "description": "장소 사이의 고민은 줄이고, 당신만의 여행을 시작하세요.",
+            "firstLine": "가고 싶은 곳을 모으면,",
+            "secondLine": "여행이 이어집니다"
+        },
+        "shortcuts": {
+            "add": "일정 추가",
+            "calendar": "달력 보기",
+            "label": "여행 빠른 메뉴",
+            "map": "지도 보기",
+            "steps": "STEP 보기"
+        }
+    },
+    "route": {
+        "advice": {
+            "exportHint": "도보·차량 동선을 계산한 뒤 Google 지도에서 열 수 있어요.",
+            "recalculateHint": "장소를 추가하면 출발지와 도착지를 유지하며 동선을 다시 계산해요.",
+            "title": "한 걸음 더 여유로운 여행"
+        },
+        "button": {
+            "recalculate": "동선 다시 계산",
+            "recalculateRemaining": "남은 장소로 재계산",
+            "recalculateTime": "변경한 시간으로 동선 다시 계산",
+            "showAll": "전체 동선 보기"
+        },
+        "cache": {
+            "calculated": "계산 후 저장된 동선",
+            "hint": "24시간 동안 같은 일정을 재사용합니다. 최신 경로는 다시 계산을 눌러 확인하세요.",
+            "saved": "저장된 동선"
+        },
+        "empty": {
+            "addPlaces": "이 날짜에 갈 장소를 추가하거나 출발·도착지를 선택하세요.",
+            "startHint": "장소를 등록해 여행을 시작하세요"
+        },
+        "error": {
+            "disconnected": "모든 장소를 연결할 수 없습니다. 장소와 이동수단을 확인해 주세요.",
+            "endpointsOutsideSection": "출발지 또는 도착지가 해당 구간에 없습니다.",
+            "incompleteMatrix": "Valhalla 이동시간 행렬 응답이 불완전합니다.",
+            "incompleteSegments": "Valhalla 경로 구간 응답이 불완전합니다.",
+            "noRoute": "Valhalla에서 연결 가능한 경로를 찾지 못했습니다. 장소와 이동수단을 확인해 주세요.",
+            "notConfigured": "Valhalla 서버 주소(VALHALLA_URL)를 설정해 주세요.",
+            "requestFailed": "Valhalla 경로 요청에 실패했습니다. 서버 주소, 지도 데이터 및 연결 상태를 확인해 주세요.",
+            "selectEndpoints": "출발지 또는 도착지를 다시 선택해 주세요.",
+            "stopLimit": "구간별 중간 방문지는 최대 8개입니다. 다른 구간이나 날짜로 나눠 주세요."
+        },
+        "label": {
+            "arrival": "도착",
+            "roundTrip": "출발·도착",
+            "start": "출발"
+        },
+        "mode": {
+            "drive": "차량",
+            "label": "이동수단",
+            "transit": "대중교통",
+            "walk": "도보"
+        },
+        "order": {
+            "departureBased": "출발 시각 기준 추천 순서",
+            "feasible": "시간 조건 반영 순서",
+            "infeasible": "시간 조건 미충족"
+        },
+        "orderOnlyHint": "장소는 저장되었습니다. 아래 순서와 지도 마커로 일정을 확인하세요. 이동시간과 필수 시각 준수 여부는 계산하지 않습니다.",
+        "settings": {
+            "departureTime": "여행 출발 시각",
+            "end": "도착지",
+            "manualRecalculationHint": "시간대·출발 시각 변경은 자동 재계산하지 않습니다. 적용하려면 동선 다시 계산을 눌러 주세요.",
+            "selectEnd": "도착지 선택",
+            "selectStart": "출발지 선택",
+            "start": "출발지",
+            "swapEndpoints": "출발지와 도착지 바꾸기",
+            "timeChanged": "시간 설정이 변경되었습니다. 현재 동선은 이전 시간 설정으로 계산된 결과입니다.",
+            "timeZone": "여행지 시간대"
+        },
+        "stats": {
+            "distance": "총 이동거리",
+            "elapsedTime": "이동 + 대기 + 머무르기",
+            "scheduleSummary": "대기 {{wait}} · 마지막 도착 {{arrival}}",
+            "travelTime": "총 이동시간"
+        },
+        "status": {
+            "calculating": "여행 동선을 계산하고 있어요…",
+            "enabled": "Valhalla 경로 사용",
+            "mapOrder": "Map · 등록한 방문 순서",
+            "optimizing": "가장 짧은 순서를 찾고 있어요",
+            "setupRequired": "Valhalla 서버 설정 필요",
+            "summary": "{{count}}개 방문지 · {{description}}",
+            "summary_one": "{{count}}개 방문지 · {{description}}",
+            "summary_other": "{{count}}개 방문지 · {{description}}",
+            "unavailable": "{{mode}} 이용 불가: {{reason}}"
+        },
+        "stopOrder": "방문 순서",
+        "segmentSummary": "{{mode}} · {{distance}} km"
+    },
+    "schedule": {
+        "error": {
+            "disconnectedOrder": "지정한 필수 방문 순서로 연결할 수 있는 경로가 없습니다.",
+            "duplicateOrder": "필수 방문 순서가 중복됩니다. 중간 방문지마다 다른 숫자를 지정해 주세요."
+        },
+        "infeasible": {
+            "description": "출발 시각·머무르기 시간·방문 장소를 수정해 주세요. 표시된 경로는 조건 미충족 경로입니다.",
+            "title": "필수 시각을 지킬 수 없는 일정입니다"
+        },
+        "label": {
+            "late": "지각"
+        },
+        "late": "{{name}}: 필수 {{time}}보다 {{minutes}}분 늦게 도착합니다.",
+        "orderRange": "이 일정의 중간 방문지는 {{count}}개입니다. 필수 순서는 1~{{count}} 안에서 지정해 주세요.",
+        "requiredTime": "필수 {{time}}",
+        "waitDuration": "대기 {{duration}}",
+        "arrivalAt": "도착 {{time}}",
+        "departureAt": "출발 {{time}}",
+        "lateDuration": "지각 {{duration}}"
+    },
+    "section": {
+        "button": {
+            "add": "구간 추가",
+            "addPlace": "이 구간에 장소 추가",
+            "delete": "구간 삭제"
+        },
+        "dailyLabel": "날짜별 동선 구간",
+        "defaultName": "기본 동선",
+        "deleteDescription": "{{name}} 구간을 삭제할까요? 등록한 장소 {{count}}개는 삭제하지 않고 같은 날짜의 ‘{{target}}’ 구간으로 옮깁니다.",
+        "description": "구간마다 방문 장소와 출발·도착지, 동선을 따로 관리합니다. 장소 수정에서 구간을 옮길 수 있어요.",
+        "error": {
+            "dateNotFound": "선택한 날짜에 속한 구간이 없습니다.",
+            "notFound": "구간이 없습니다.",
+            "selectDateSection": "선택한 날짜에 속한 구간을 선택해 주세요."
+        },
+        "label": "동선 구간",
+        "manageLabel": "구간 관리",
+        "name": "구간 이름",
+        "namePlaceholder": "예: 오전, 오후, 저녁"
+    },
+    "settings": {
+        "error": {
+            "invalidDateSection": "설정의 날짜 또는 구간이 올바르지 않습니다.",
+            "invalidPreferences": "시간대 또는 이동수단이 올바르지 않습니다.",
+            "invalidTimeZone": "올바른 시간대를 선택해 주세요.",
+            "save": "설정을 저장하지 못했습니다: {{message}}"
+        },
+        "page": {
+            "title": "설정",
+            "back": "여행으로 돌아가기",
+            "description": "언어와 개인 기본 설정, 여행을 관리하세요."
+        }
+    },
+    "transit": {
+        "button": {
+            "find": "대중교통 찾기 ↗"
+        },
+        "error": {
+            "unsupported": "Valhalla 대중교통 동선 최적화는 지원하지 않습니다. 구간별 Google 지도 링크에서 교통편을 확인해 주세요."
+        },
+        "fallback": {
+            "description": "Valhalla 대중교통 동선 최적화는 지원하지 않습니다. 아래 구간은 필수 순서를 먼저 반영한 목록이며 최적화된 코스가 아닙니다. 출발 날짜·시각은 Google 지도에서 다시 설정하세요.",
+            "googleHint": "각 STEP 사이의 Google 길찾기에서 교통편을 확인하세요. 출발 날짜·시각은 Google 지도에서 설정해 주세요.",
+            "title": "Google 지도에서 교통편 확인"
+        },
+        "headsign": "{{destination}} 방면",
+        "ride": "{{departure}} 승차 · {{arrival}} 하차",
+        "rideWithStops": "{{departure}} 승차 · {{arrival}} 하차 · {{count}}개 정류장",
+        "rideWithStops_one": "{{departure}} 승차 · {{arrival}} 하차 · {{count}}개 정류장",
+        "rideWithStops_other": "{{departure}} 승차 · {{arrival}} 하차 · {{count}}개 정류장",
+        "scheduleNotice": "{{optimization}}. 도보·대기·환승을 포함한 이동시간이며, 운행 일정은 변경될 수 있습니다.",
+        "timeRange": "{{departure}} 출발 → {{arrival}} 도착",
+        "timeUnavailable": "시각 미제공",
+        "transfers": "환승 {{count}}회",
+        "walkInstruction": "승하차 지점 또는 다음 장소로 이동",
+        "walkOnly": "도보만으로 연결",
+        "walkSummary": "도보 {{duration}} · {{distance}}m"
+    },
+    "trash": {
+        "count": "휴지통 {{count}}개",
+        "count_one": "휴지통 {{count}}개",
+        "count_other": "휴지통 {{count}}개",
+        "empty": "삭제한 일정이 없습니다.",
+        "error": {
+            "duplicatePlaceId": "동일한 장소 ID가 이미 있습니다. 복구를 중단했습니다.",
+            "notFound": "복구할 항목이 없습니다.",
+            "placeLimit": "복구 후 장소가 100개를 초과합니다. 다른 여행에 백업을 가져오거나 장소를 정리해 주세요."
+        }
+    },
+    "trip": {
+        "button": {
+            "create": "새 여행 만들기",
+            "rename": "현재 여행 이름 변경"
+        },
+        "current": "현재 여행",
+        "error": {
+            "notFound": "여행이 없습니다."
+        },
+        "label": "여행",
+        "loading": "여행 정보를 불러오는 중입니다.",
+        "manageLabel": "여행 관리",
+        "name": "여행 이름",
+        "namePlaceholder": "예: 도쿄 가을 여행",
+        "tools": {
+            "title": "여행·백업·휴지통"
+        }
+    }
+}
