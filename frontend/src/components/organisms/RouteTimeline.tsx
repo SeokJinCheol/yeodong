@@ -1,3 +1,4 @@
+import { VisitStatusControl } from '../molecules/VisitStatusControl';
 import { PlaceMapLink } from '../molecules/PlaceMapLink';
 import {
     ArrowDown,
@@ -10,7 +11,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { minutes } from '../../lib/api';
-import type { Place, Plan } from '../../lib/types';
+import type { Place, Plan, VisitStatus } from '../../lib/types';
 import { StepDirections } from '../molecules/StepDirections';
 import { TransitLeg } from '../molecules/TransitLeg';
 import { DepartureAdvice } from '../molecules/DepartureAdvice';
@@ -25,9 +26,11 @@ export function RouteTimeline({
     onSelect,
     selectedId,
     onUpdated,
+    onVisitStatus,
 }: {
     plan: Plan;
     onUpdated: (place: Place) => void;
+    onVisitStatus: (place: Place, status: VisitStatus) => void;
     onSelect: (place: Place) => void;
     selectedId?: number;
     onDelete: (id: number) => void;
@@ -101,6 +104,11 @@ export function RouteTimeline({
                                     <Trash2 size={ 14 } />
                                 </Button>
                             </div>
+                            <VisitStatusControl
+                                place={ place }
+                                busy={ busy }
+                                onChange={ onVisitStatus }
+                            />
                             <p>
                                 {
                                     place.area || place.address || '등록한 장소'

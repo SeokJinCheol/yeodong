@@ -1,3 +1,14 @@
+export const activeTripId = (() => {
+    try {
+        return Number(localStorage.getItem('yeodong-trip')) || 1;
+    } catch {
+        return 1;
+    }
+})();
+export function switchTrip(id: number) {
+    localStorage.setItem('yeodong-trip', String(id));
+    window.location.reload();
+}
 export class ApiError extends Error {
     constructor(
         message: string,
@@ -9,7 +20,8 @@ export class ApiError extends Error {
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(`${import.meta.env.BASE_URL}api${path}`, {
         ...init,
-        headers: { 'Content-Type': 'application/json', ...init?.headers },
+        headers: { 'Content-Type': 'application/json',
+            'X-Trip-ID': String(activeTripId), ...init?.headers },
     });
     if (!response.ok) {
         const data = await response.json().catch(() => null);

@@ -11,6 +11,7 @@ export interface RouteSection {
     visit_date: string;
 }
 export interface PlaceInput {
+    visit_status?: VisitStatus;
     section_id?: number | null;
     description?: string;
     tasks?: PlaceTask[];
@@ -110,4 +111,16 @@ export type CopyItineraryResult = {
     section_id: number | null;
     section_name: string;
     place_id_map: Record<string, number>;
+};
+
+export type VisitStatus = 'pending' | 'visited' | 'skipped';
+export type Trip = { id: number; name: string };
+export type TrashItem = { id: number; label: string; deleted_at: string };
+export type RoutePreferences = {
+    start: number | null;
+    end: number | null;
+    departureTime: string;
+    timeZone: string;
+    mode: Mode | 'MAP';
+    orderMode: 'auto' | 'manual';
 };

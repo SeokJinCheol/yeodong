@@ -1,3 +1,5 @@
+import { TripTools } from '../components/organisms/TripTools';
+import { ItineraryProgress } from '../components/organisms/ItineraryProgress';
 import { useEffect, useRef, useState } from 'react';
 import { CalendarDays, MapPin, Plus, RefreshCw, Route, Sparkles } from 'lucide-react';
 import { api, json, localDate } from '../lib/api';
@@ -54,7 +56,13 @@ export function PlannerPage() {
     const section = useRouteSections(date, sections, defaultSectionNames, data.runMutation);
     const { sectionId, daySections, defaultSectionName, setSectionId } = section;
     const places = allPlaces.filter((p) => (p.section_id ?? null) === sectionId);
-    const settings = useRouteSettings(places, date, sectionId);
+    const settings = useRouteSettings(
+        places,
+        date,
+        sectionId,
+        data.routeSettings,
+        data.savePreferences,
+    );
     const { start, end, departureTime, timeZone } = settings;
     const route = useRoutePlan({
         places,
@@ -66,23 +74,14 @@ export function PlannerPage() {
         departureTime,
         timeZone,
         setError,
+        viewMode: settings.viewMode,
     });
-    const {
-        plan,
-        mode,
-        setMode,
-        orderOnly,
-        setOrderOnly,
-        busy,
-        calculatedTime,
-        unavailable,
-        recalculate,
-    } = route;
+    const { plan, mode, orderOnly, busy, calculatedTime, unavailable, recalculate } = route;
     const [selectedPlaceId, setSelectedPlaceId] = useState<number>();
     useEffect(() => {
         setSelectedPlaceId(undefined);
     }, [date, sectionId]);
-    const selectedPlace = places.find((p) => p.id === selectedPlaceId);
+    const selectedPlace = allPlaces.find((p) => p.id === selectedPlaceId);
     function togglePlace(place: Place) {
         setSelectedPlaceId((previous) => (previous === place.id ? undefined : place.id));
     }
@@ -90,6 +89,21 @@ export function PlannerPage() {
     const [editingPlace, setEditingPlace] = useState<Place>();
     const [showForm, setShowForm] = useState(false);
     const workspaceRef = useRef<HTMLElement>(null);
+    const mapSectionRef = useRef<HTMLDivElement>(null);
+    const stepsSectionRef = useRef<HTMLDivElement>(null);
+    const previousScroll = useRef<{ steps?: number; map?: number }>({});
+    const [mobileView, setMobileView] = useState<'steps' | 'map'>('steps');
+    function jumpTo(target: 'steps' | 'map') {
+        previousScroll.current[mobileView] = window.scrollY;
+        const remembered = previousScroll.current[target];
+        setMobileView(target);
+        if (remembered !== undefined) window.scrollTo({ top: remembered, behavior: 'smooth' });
+        else
+            (target === 'map' ? mapSectionRef : stepsSectionRef).current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
+    }
     function openCalendar() {
         setCalendarOpen(true);
         requestAnimationFrame(() =>
@@ -113,12 +127,12 @@ export function PlannerPage() {
         onSelect: togglePlace,
         onEdit: editPlace,
         onUpdated: updateChecklist,
+        onVisitStatus: data.setVisitStatus,
         onDelete: (place: Place) => data.deletePlace(place.id),
         onDateChange: data.changePlaceDate,
     };
     const dayPlaces = places.filter((p) => p.visit_date === date);
     const dayCount = allPlaces.filter((p) => p.visit_date === date).length;
-    const orderedPlaces = orderedPlacesFor(places, date, plan);
     const {
         places: fallbackPlaces,
         middleCount,
@@ -142,25 +156,37 @@ export function PlannerPage() {
             start_id: start,
             end_id: end,
         });
-        settings.copySection(result);
         setDate(result.target_date);
         section.selectSection(result.target_date, result.section_id);
         setSelectedPlaceId(undefined);
     }
+    async function reorder(ids: number[], automatic: boolean) {
+        if (start === undefined || end === undefined) return;
+        await mutate(() =>
+            api(
+                '/itineraries/order',
+                json('PUT', {
+                    visit_date: date,
+                    section_id: sectionId,
+                    start_id: start,
+                    end_id: end,
+                    place_ids: ids,
+                    automatic,
+                }),
+            ),
+        );
+    }
     async function moveDay(target: string) {
         await mutate(async () => {
             await api('/days/move', json('POST', { source_date: date, target_date: target }));
-            settings.moveDay(target);
             setDate(target);
         });
     }
     async function deleteDay() {
         await data.runMutation(async () => {
             await api(`/days/${date}`, { method: 'DELETE' });
+            await data.captureUndo();
             route.reset();
-            settings.removeDay(
-                new Set(allPlaces.filter((p) => p.visit_date === date).map((p) => p.id)),
-            );
             setSelectedPlaceId(undefined);
             setSectionId(null);
             data.removeDay(date);
@@ -179,6 +205,51 @@ export function PlannerPage() {
         });
     return (
         <PlannerLayout>
+            <TripTools
+                busy={ mutating || busy || data.settingsPending > 0 }
+                trash={ data.trash }
+                onRestore={ data.restoreTrash }
+                runMutation={ data.runMutation }
+            />
+            {
+                data.settingsPending > 0 && (
+                    <p
+                        role="status"
+                        className="settings-saving"
+                    >
+                        설정 저장 중…
+                    </p>
+                )
+            }
+            {
+                data.undo && (
+                    <div
+                        role="status"
+                        className="undo-toast"
+                    >
+                        <span>
+                            {
+                                data.undo.label
+                            }
+                            { ' 삭제됨' }
+                        </span>
+                        <button
+                            disabled={ mutating }
+                            onClick={ () =>
+                                void data.restoreTrash(data.undo!.id).catch((e) => setError(e.message))
+                            }
+                        >
+                            실행 취소
+                        </button>
+                        <button
+                            aria-label="삭제 알림 닫기"
+                            onClick={ () => data.setUndo(undefined) }
+                        >
+                            ×
+                        </button>
+                    </div>
+                )
+            }
             <section className="intro">
                 <div>
                     <span className="eyebrow">
@@ -291,7 +362,6 @@ export function PlannerPage() {
                             onSave={ section.saveSection }
                             onDelete={ () =>
                                 section.deleteSection(() => {
-                                    settings.removeSection();
                                     setSelectedPlaceId(undefined);
                                 })
                             }
@@ -476,6 +546,25 @@ export function PlannerPage() {
                                         </p>
                                     )
                                 }
+                                <div
+                                    ref={ stepsSectionRef }
+                                    className="steps-anchor"
+                                />
+                                <ItineraryProgress
+                                    places={ fallbackPlaces }
+                                    orderPlaces={ fallbackPlaces }
+                                    start={ start }
+                                    end={ end }
+                                    busy={ busy || mutating }
+                                    orderMode={ settings.orderMode }
+                                    onOrder={ reorder }
+                                    onRemaining={ route.recalculateRemaining }
+                                    onAll={ route.recalculateAll }
+                                    remainingOnly={ route.remainingOnly }
+                                    canCalculate={
+                                        !orderOnly && start !== undefined && end !== undefined
+                                    }
+                                />
                                 {
                                     busy ? (
                                         <div className="empty loading">
@@ -492,6 +581,7 @@ export function PlannerPage() {
                                             onSelect={ togglePlace }
                                             onEdit={ editPlace }
                                             onUpdated={ updateChecklist }
+                                            onVisitStatus={ data.setVisitStatus }
                                             onDelete={ data.deletePlace }
                                         />
                                     ) : fallbackPlaces.length > 0 ? (
@@ -535,19 +625,17 @@ export function PlannerPage() {
                                     이 구간에 장소 추가
                                 </Button>
                                 <SavedPlaces
-                                    places={ orderedPlaces }
+                                    places={ orderedPlacesFor(allPlaces, date, plan) }
                                     selectedId={ selectedPlaceId }
                                     busy={ mutating }
                                     { ...placeActions }
                                 />
                             </section>
                             <RouteOverview
-                                mode={ orderOnly ? 'MAP' : mode }
+                                sectionRef={ mapSectionRef }
+                                mode={ settings.viewMode }
                                 unavailable={ unavailable }
-                                onModeChange={ (value) => {
-                                    setOrderOnly(value === 'MAP');
-                                    if (value !== 'MAP') setMode(value);
-                                } }
+                                onModeChange={ settings.setMode }
                                 plan={ plan }
                                 selectedPlace={ selectedPlace }
                                 fallbackPlaces={ fallbackPlaces }
@@ -572,6 +660,18 @@ export function PlannerPage() {
                         className="floating-actions"
                         aria-label="여행 빠른 메뉴"
                     >
+                        {
+                            date && (
+                                <button
+                                    className="mobile-view-switch"
+                                    onClick={ () => jumpTo(mobileView === 'steps' ? 'map' : 'steps') }
+                                >
+                                    {
+                                        mobileView === 'steps' ? '지도 보기' : 'STEP 보기'
+                                    }
+                                </button>
+                            )
+                        }
                         <button
                             type="button"
                             className="floating-action calendar"

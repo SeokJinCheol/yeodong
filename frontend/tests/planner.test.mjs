@@ -56,3 +56,18 @@ test('moving/deleting a day scopes preferences to that date and all of its secti
     assert.deepEqual(removeDayEntries(entries, date), {'2026-10-09':'other', [`${date}0`]:'unrelated'});
     assert.deepEqual(entries, before);
 });
+
+test('saved place search combines name/area/address and status/date filters without mutation', async () => {
+    const { filterSavedPlaces } = await import('../src/lib/planner.ts');
+    const places = [place(1, {name:'Tokyo cafe', area:'Shibuya', address:'Station', visit_status:'visited'}), place(2, {name:'Museum', area:'Ueno', address:'Park', visit_date:null}), place(3, {name:'Tokyo hotel', area:'Shibuya', address:'Road', visit_status:'skipped'})];
+    assert.deepEqual(filterSavedPlaces(places, ' SHIBUYA ', 'visited').map(p => p.id), [1]);
+    assert.deepEqual(filterSavedPlaces(places, 'park', 'unscheduled').map(p => p.id), [2]);
+    assert.deepEqual(filterSavedPlaces(places, '', 'pending').map(p => p.id), [2]);
+    assert.deepEqual(filterSavedPlaces(places, 'tokyo', 'scheduled').map(p => p.id), [1,3]);
+    assert.equal(places.length, 3);
+});
+
+test('visit status changes do not change routing input', () => {
+    assert.equal(routingKeyFor([place(1)]), routingKeyFor([place(1, {visit_status:'visited'})]));
+    assert.equal(routingKeyFor([place(1)]), routingKeyFor([place(1, {visit_status:'skipped'})]));
+});

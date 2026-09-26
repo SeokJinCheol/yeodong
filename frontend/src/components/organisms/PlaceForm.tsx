@@ -46,6 +46,7 @@ export function PlaceForm({
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Partial<PlaceInput>[]>([]);
     const [form, setForm] = useState({
+        visit_status: place?.visit_status ?? 'pending',
         section_id: place ? (place.section_id ?? null) : sectionId,
         description: place?.description ?? '',
         tasks: place?.tasks ?? [],

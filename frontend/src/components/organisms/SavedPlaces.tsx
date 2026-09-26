@@ -1,8 +1,10 @@
+import { filterSavedPlaces } from '../../lib/planner';
+import { VisitStatusControl } from '../molecules/VisitStatusControl';
 import { PlaceMapLink } from '../molecules/PlaceMapLink';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { StepDirections } from '../molecules/StepDirections';
 import { Pencil, Trash2 } from 'lucide-react';
-import type { Mode, Place } from '../../lib/types';
+import type { Mode, Place, VisitStatus } from '../../lib/types';
 import { minutes } from '../../lib/api';
 import { PlaceChecklist } from '../molecules/PlaceChecklist';
 export function SavedPlaces({
@@ -14,6 +16,7 @@ export function SavedPlaces({
     onDateChange,
     onDelete,
     onUpdated,
+    onVisitStatus,
     expanded = false,
     numbered = false,
     directionsMode,
@@ -31,7 +34,11 @@ export function SavedPlaces({
     onDateChange: (p: Place, date: string) => void;
     onDelete: (p: Place) => void;
     onUpdated: (p: Place) => void;
+    onVisitStatus: (p: Place, status: VisitStatus) => void;
 }) {
+    const [query, setQuery] = useState('');
+    const [filter, setFilter] = useState('all');
+    const visiblePlaces = numbered ? places : filterSavedPlaces(places, query, filter);
     return (
         <details
             className="saved-places"
@@ -48,14 +55,59 @@ export function SavedPlaces({
                     }
                 </span>
             </summary>
+            {
+                !numbered && (
+                    <div className="saved-place-filters">
+                        <input
+                            type="search"
+                            aria-label="저장 장소 검색"
+                            placeholder="이름·지역·주소 검색"
+                            value={ query }
+                            onChange={ (e) => setQuery(e.target.value) }
+                        />
+                        <select
+                            aria-label="저장 장소 필터"
+                            value={ filter }
+                            onChange={ (e) => setFilter(e.target.value) }
+                        >
+                            <option value="all">
+                                전체 장소
+                            </option>
+                            <option value="unscheduled">
+                                날짜 미정
+                            </option>
+                            <option value="scheduled">
+                                날짜 지정
+                            </option>
+                            <option value="pending">
+                                방문 예정
+                            </option>
+                            <option value="visited">
+                                방문 완료
+                            </option>
+                            <option value="skipped">
+                                건너뜀
+                            </option>
+                        </select>
+                        <span>
+                            {
+                                visiblePlaces.length
+                            }
+                            개 장소
+                        </span>
+                    </div>
+                )
+            }
             <div className="saved-place-list">
                 {
-                    places.length === 0 && <p className="muted">
-                        저장한 장소가 없습니다.
-                    </p>
+                    visiblePlaces.length === 0 && (
+                        <p className="muted">
+                            조건에 맞는 장소가 없습니다.
+                        </p>
+                    )
                 }
                 {
-                    places.map((p, i) => (
+                    visiblePlaces.map((p, i) => (
                         <Fragment key={ `${p.id}-${i}` }>
                             <article className="saved-place-card">
                                 <div className="saved-place-heading">
@@ -107,6 +159,11 @@ export function SavedPlaces({
                                         </button>
                                     </div>
                                 </div>
+                                <VisitStatusControl
+                                    place={ p }
+                                    busy={ busy }
+                                    onChange={ onVisitStatus }
+                                />
                                 <div className="saved-place-meta">
                                     <span>
                                         {

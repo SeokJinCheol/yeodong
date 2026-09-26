@@ -89,3 +89,19 @@ export function moveDayEntries<T>(entries: Record<string, T>, date: string, targ
         });
     return next;
 }
+
+export function filterSavedPlaces(places: Place[], query: string, filter: string) {
+    const search = query.trim().toLocaleLowerCase();
+    return places.filter((place) => {
+        if (
+            search &&
+            !`${place.name} ${place.area} ${place.address}`.toLocaleLowerCase().includes(search)
+        )
+            return false;
+        if (filter === 'unscheduled') return !place.visit_date;
+        if (filter === 'scheduled') return !!place.visit_date;
+        if (['pending', 'visited', 'skipped'].includes(filter))
+            return (place.visit_status ?? 'pending') === filter;
+        return true;
+    });
+}

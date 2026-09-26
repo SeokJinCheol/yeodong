@@ -13,6 +13,7 @@ interface RoutePlanOptions {
     departureTime: string;
     timeZone: string;
     setError: (message: string) => void;
+    viewMode: Mode | 'MAP';
 }
 export function useRoutePlan({
     places,
@@ -24,10 +25,31 @@ export function useRoutePlan({
     departureTime,
     timeZone,
     setError,
+    viewMode,
 }: RoutePlanOptions) {
     const [plan, setPlan] = useState<Plan | null>(null);
-    const [mode, setMode] = useState<Mode>('WALK'),
-        [orderOnly, setOrderOnly] = useState(true);
+    const mode: Mode = viewMode === 'MAP' ? 'WALK' : viewMode;
+    const orderOnly = viewMode === 'MAP';
+    const [excludedIds, setExcludedIds] = useState<number[]>([]);
+    const excludedScope = useRef('');
+    const currentScope = `${date}:${sectionId}:${start}:${end}`;
+    const activeExcluded = excludedScope.current === currentScope ? excludedIds : [];
+    function recalculateRemaining() {
+        excludedScope.current = currentScope;
+        setExcludedIds(
+            places
+                .filter(
+                    (p) => p.visit_date === date && p.visit_status && p.visit_status !== 'pending',
+                )
+                .map((p) => p.id),
+        );
+        recalculate();
+    }
+    function recalculateAll() {
+        excludedScope.current = currentScope;
+        setExcludedIds([]);
+        recalculate();
+    }
     const [busy, setBusy] = useState(false),
         [revision, setRevision] = useState(0);
     const [calculatedTime, setCalculatedTime] = useState('');
@@ -87,6 +109,7 @@ export function useRoutePlan({
             api<Plan>(
                 '/plan',
                 json('POST', {
+                    excluded_ids: activeExcluded,
                     force_refresh: forceRefresh,
                     visit_date: date,
                     section_id: sectionId,
@@ -130,7 +153,7 @@ export function useRoutePlan({
             clearTimeout(timer);
             generation.current++;
         };
-    }, [routingKey, date, sectionId, start, end, mode, revision, orderOnly]);
+    }, [routingKey, date, sectionId, start, end, mode, revision, orderOnly, excludedIds]);
 
     // Keep notes/checklists fresh without recalculating a route for non-routing edits.
     const currentPlan = useMemo(
@@ -148,13 +171,14 @@ export function useRoutePlan({
     return {
         plan: currentPlan,
         mode,
-        setMode,
         orderOnly,
-        setOrderOnly,
         busy,
         calculatedTime,
         unavailable,
         recalculate,
+        recalculateRemaining,
+        recalculateAll,
+        remainingOnly: activeExcluded.length > 0,
         reset,
     };
 }

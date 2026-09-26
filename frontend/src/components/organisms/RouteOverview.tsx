@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import { Clock3, MapPin, Route, Sparkles } from 'lucide-react';
 import { minutes } from '../../lib/api';
 import type { MapPlace, Mode, Place, Plan } from '../../lib/types';
@@ -5,6 +6,7 @@ import { StatCard } from '../molecules/StatCard';
 import { ModeSwitch } from '../molecules/ModeSwitch';
 import { RouteMap } from './RouteMap';
 interface Props {
+    sectionRef?: Ref<HTMLDivElement>;
     mode: Mode | 'MAP';
     unavailable: Partial<Record<Mode | 'MAP', string>>;
     onModeChange: (mode: Mode | 'MAP') => void;
@@ -15,6 +17,7 @@ interface Props {
     onAddPlace: (position: MapPlace) => void;
 }
 export function RouteOverview({
+    sectionRef,
     mode,
     unavailable,
     onModeChange,
@@ -25,7 +28,10 @@ export function RouteOverview({
     onAddPlace,
 }: Props) {
     return (
-        <div className="map-column">
+        <div
+            className="map-column"
+            ref={ sectionRef }
+        >
             <div className="map-mode-controls">
                 <ModeSwitch
                     value={ mode }

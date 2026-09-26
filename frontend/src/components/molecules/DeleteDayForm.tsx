@@ -46,8 +46,8 @@ export function DeleteDayForm({
                             {
                                 count
                             }
-                            개를 삭제합니다. 장소의 메모와 할 일도 함께 삭제되며 되돌릴 수 없습니다.
-                            다른 날짜와 날짜 미정 장소는 유지됩니다.
+                            개를 휴지통으로 옮깁니다. 장소의 메모와 할 일도 함께 보관되며 휴지통에서
+                            복구할 수 있습니다. 다른 날짜와 날짜 미정 장소는 유지됩니다.
                         </p>
                         <div className="section-actions">
                             <Button
@@ -64,7 +64,7 @@ export function DeleteDayForm({
                                 } }
                             >
                                 {
-                                    busy ? '삭제 중…' : '이 날짜 일정 영구 삭제'
+                                    busy ? '삭제 중…' : '휴지통으로 이동'
                                 }
                             </Button>
                             <button
