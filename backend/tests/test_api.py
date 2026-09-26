@@ -8,7 +8,18 @@ from app.main import app
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings,'database_path',str(tmp_path/'test.db'))
-    monkeypatch.setattr(settings,'google_maps_api_key','')
+    monkeypatch.setattr(settings,'photon_url','')
+    from app import valhalla
+    from app.routing import estimate_matrix, distance
+    async def matrix(places, mode):
+        return estimate_matrix(places, mode)
+    async def route(places, mode):
+        times = estimate_matrix(places, mode)
+        return ([dict(duration=f'{times[i][i+1]}s', distanceMeters=round(distance(a,b)))
+                 for i,(a,b) in enumerate(zip(places, places[1:]))],
+                [[p['lng'],p['lat']] for p in places])
+    monkeypatch.setattr(valhalla, 'time_matrix', matrix)
+    monkeypatch.setattr(valhalla, 'route_details', route)
     with TestClient(app) as client:
         yield client
 
@@ -26,7 +37,7 @@ def test_add_replan_delete_and_persistence(client):
     assert len(result['legs']) == len(original['legs'])+1
     assert result['total_travel_seconds'] == sum(l['duration_seconds'] for l in result['legs'])
     assert result['total_stay_minutes'] == original['total_stay_minutes']+25
-    assert result['source'] == 'estimate'
+    assert result['source'] == 'valhalla'
     assert result['places'][0]['id'] == 1 and result['places'][-1]['id'] == 5
     assert any(p['id']==id for p in client.get('/api/places').json())
     assert client.delete(f'/api/places/{id}').status_code == 204
@@ -53,10 +64,11 @@ def test_limit_and_round_trip(client):
     assert client.post('/api/plan',json=payload).status_code == 422
 
 
-def test_transit_requires_google_key(client):
+def test_transit_reports_unsupported(client):
     date = client.get('/api/places').json()[0]['visit_date']
     result = client.post('/api/plan',json=dict(visit_date=date,start_id=1,end_id=5,mode='TRANSIT'))
-    assert result.status_code == 503
+    assert result.status_code == 422
+    assert result.headers["X-Route-Unavailable"] == "true"
 
 
 def test_edit_stay_and_required_time_persist_and_recalculate(client):
@@ -74,28 +86,18 @@ def test_edit_stay_and_required_time_persist_and_recalculate(client):
     assert client.put(f"/api/places/{place['id']}",json={**stored,'required_time':None}).status_code==200
 
 
-def test_transit_plan_uses_matrix_then_sequential_legs(client,monkeypatch):
-    from app import google
-    monkeypatch.setattr(settings,'google_maps_api_key','test-key')
-    calls=[]
-    async def fake_request(url,body,mask):
-        calls.append(body)
-        if 'computeRouteMatrix' in url:
-            n=len(body['origins'])
-            return [dict(originIndex=i,destinationIndex=j,duration='600s',condition='ROUTE_EXISTS') for i in range(n) for j in range(n)]
-        return {'routes':[{'duration':'600s','legs':[{'distanceMeters':1000,'steps':[
-            {'travelMode':'TRANSIT','staticDuration':'600s','transitDetails':{'transitLine':{'nameShort':'24'}}}
-        ]}], 'polyline':{'geoJsonLinestring':{'coordinates':[[139.7,35.69],[139.71,35.70]]}}}]}
-    monkeypatch.setattr(google,'request',fake_request)
-    date=client.get('/api/places').json()[0]['visit_date']
-    response=client.post('/api/plan',json=dict(visit_date=date,start_id=1,end_id=5,mode='TRANSIT',departure_time='09:00'))
-    assert response.status_code==200
-    plan=response.json()
-    assert plan['total_travel_seconds']==2400
-    assert plan['total_stay_minutes']==150
-    assert len(plan['legs'])==4 and len(calls)==5
-    assert plan['places'][0]['id']==1 and plan['places'][-1]['id']==5
-    assert all(l['steps'][0]['line']=='24' for l in plan['legs'])
+def test_routing_uses_only_valhalla(client, monkeypatch):
+    import httpx
+    async def forbidden(*args, **kwargs):
+        pytest.fail('Planning must only use the mocked Valhalla adapter')
+    monkeypatch.setattr(httpx.AsyncClient, 'request', forbidden)
+    date = client.get('/api/places').json()[0]['visit_date']
+    for mode in ('WALK', 'DRIVE'):
+        result = client.post('/api/plan', json=dict(visit_date=date, start_id=1, end_id=5, mode=mode))
+        assert result.status_code == 200
+        assert result.json()['source'] == 'valhalla'
+    result = client.post('/api/plan', json=dict(visit_date=date, start_id=1, end_id=5, mode='TRANSIT'))
+    assert result.status_code == 422
 
 
 def test_move_day_preserves_places_and_rejects_occupied_date(client):
@@ -156,13 +158,13 @@ def test_place_checklist_and_description_persist(client):
 
 
 def test_saved_route_skips_recalculation_and_refreshes_metadata(client,monkeypatch):
-    from app import main
+    from app import valhalla
     calls=[]
-    original=main.estimate_matrix
-    def counted(*args):
+    original=valhalla.time_matrix
+    async def counted(*args):
         calls.append(1)
-        return original(*args)
-    monkeypatch.setattr(main,'estimate_matrix',counted)
+        return await original(*args)
+    monkeypatch.setattr(valhalla,'time_matrix',counted)
     place=client.get('/api/places').json()[1]
     payload={'visit_date':place['visit_date'],'start_id':1,'end_id':5}
     assert client.post('/api/plan',json=payload).json()['cache_hit'] is False
@@ -184,30 +186,25 @@ def test_saved_route_skips_recalculation_and_refreshes_metadata(client,monkeypat
 
 
 def test_unreachable_route_keeps_places(client,monkeypatch):
-    from app import main
+    from app import valhalla
     before=client.get('/api/places').json()
-    monkeypatch.setattr(main,'estimate_matrix',lambda nodes,mode:[[0 if i==j else float('inf') for j in range(len(nodes))] for i in range(len(nodes))])
+    async def unreachable(nodes, mode):
+        return [[0 if i==j else float('inf') for j in range(len(nodes))] for i in range(len(nodes))]
+    monkeypatch.setattr(valhalla, 'time_matrix', unreachable)
     response=client.post('/api/plan',json={'visit_date':before[0]['visit_date'],'start_id':1,'end_id':5})
     assert response.status_code==422
     assert response.headers.get('X-Route-Unavailable')=='true'
     assert client.get('/api/places').json()==before
 
 
-def test_map_place_returns_name_and_coordinates(client,monkeypatch):
-    import httpx
-    from app import google
-    monkeypatch.setattr(settings,'google_maps_api_key','test')
-    original_client=httpx.AsyncClient
-    def respond(request):
-        assert request.method=='GET'
-        assert request.url.path=='/v1/places/example-id'
-        assert request.headers['X-Goog-FieldMask']=='id,displayName,formattedAddress,location'
-        return httpx.Response(200,json={'id':'example-id','displayName':{'text':'선택한 카페'},'formattedAddress':'도쿄', 'location':{'latitude':35.6,'longitude':139.7}})
-    monkeypatch.setattr(google.httpx,'AsyncClient',lambda **kwargs:original_client(transport=httpx.MockTransport(respond),**kwargs))
-    result=client.get('/api/map-place?place_id=example-id')
-    assert result.status_code==200
-    assert result.json()==dict(name='선택한 카페',address='도쿄',lat=35.6,lng=139.7,google_place_id='example-id')
-    assert client.get('/api/map-place?place_id=').status_code==422
+def test_search_uses_geocoding_and_google_details_are_removed(client, monkeypatch):
+    from app import geocoding
+    async def search(query):
+        assert query == 'Tokyo'
+        return [dict(name='Tokyo', address='Japan', lat=35.6, lng=139.7)]
+    monkeypatch.setattr(geocoding, 'search_places', search)
+    assert client.get('/api/search?q=Tokyo').json()[0]['name'] == 'Tokyo'
+    assert client.get('/api/map-place?place_id=old-google-id').status_code == 404
 
 
 def test_sections_isolate_routes_and_validate_place_dates(client):

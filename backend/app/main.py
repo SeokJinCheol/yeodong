@@ -8,10 +8,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import db, google, transit, scheduling
+from . import db, geocoding, transit, scheduling, valhalla
 from .config import settings
 from .models import AssignInput, MoveDayInput, Place, PlaceInput, PlanInput, TaskStatus, SectionInput
-from .routing import cluster_places, distance, estimate_matrix, optimal_order
+from .routing import cluster_places
 
 
 @asynccontextmanager
@@ -26,7 +26,7 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_me
 
 @app.get('/api/health')
 def health():
-    return {'status': 'ok', 'google_enabled': bool(settings.google_maps_api_key)}
+    return {'status': 'ok', 'routing_provider': 'valhalla', 'valhalla_enabled': bool(settings.valhalla_url)}
 
 
 @app.get('/api/sections')
@@ -128,9 +128,7 @@ def delete_place(place_id: int):
 
 @app.get('/api/search')
 async def search(q: str = Query(min_length=2, max_length=200)):
-    if not settings.google_maps_api_key:
-        raise HTTPException(503, '장소 검색은 Google 서버 API 키가 필요합니다. 직접 좌표를 입력해 등록할 수 있습니다.')
-    return await google.search_places(q)
+    return await geocoding.search_places(q)
 
 
 @app.post('/api/plan')
@@ -145,10 +143,10 @@ async def plan(payload: PlanInput):
     if len(stops) > 8:
         raise HTTPException(422, '구간별 중간 방문지는 최대 8개입니다. 다른 구간이나 날짜로 나눠 주세요.')
     nodes = [lookup[payload.start_id], *stops, lookup[payload.end_id]]
-    live = bool(settings.google_maps_api_key)
+    valhalla.costing(payload.mode)
     departure = transit.departure_for(payload)
     appointments = scheduling.appointments_for(nodes, payload)
-    signature = {'version':1, 'google':live, 'request':payload.model_dump(mode='json', exclude={'force_refresh'}),
+    signature = {'version':2, 'provider':'valhalla', 'endpoint':settings.valhalla_url, 'request':payload.model_dump(mode='json', exclude={'force_refresh'}),
                  'nodes':[{k:p.get(k) for k in ('id','lat','lng','visit_date','stay_minutes','required_order','required_time')} for p in nodes]}
     cache_key = hashlib.sha256(json.dumps(signature,sort_keys=True).encode()).hexdigest()
     now = time.time()
@@ -161,29 +159,14 @@ async def plan(payload: PlanInput):
         result['cache_hit'] = True
         return result
 
-    if payload.mode == 'TRANSIT':
-        if not live:
-            raise HTTPException(503, '대중교통 경로에는 Google 서버 API 키가 필요합니다.')
-        departure = transit.departure_for(payload)
-        matrix = await google.time_matrix(nodes, payload.mode, departure)
-    else:
-        matrix = await google.time_matrix(nodes, payload.mode) if live else estimate_matrix(nodes, payload.mode)
+    matrix = await valhalla.time_matrix(nodes, payload.mode)
     order = scheduling.scheduled_order(nodes, matrix, departure, appointments)
     if any(not math.isfinite(matrix[a][b]) for a,b in zip(order,order[1:])):
-        message = ('이 일정의 대중교통 경로를 제공할 수 없습니다. 일본은 Google 대중교통 API 미지원 지역입니다. 다른 지역에서는 출발 시각과 장소를 확인해 주세요.'
-                   if payload.mode == 'TRANSIT' else '모든 장소를 연결할 수 없습니다. 장소와 이동수단을 확인해 주세요.')
-        raise HTTPException(422, message, headers={'X-Route-Unavailable':'true'})
+        raise HTTPException(422, '모든 장소를 연결할 수 없습니다. 장소와 이동수단을 확인해 주세요.', headers={'X-Route-Unavailable':'true'})
     ordered = [nodes[i] for i in order]
-    if live:
-        if payload.mode == 'TRANSIT':
-            raw_legs, coordinates = await transit.route_details(ordered, departure, appointments)
-        else:
-            raw_legs, coordinates = await google.route_details(ordered, payload.mode)
-        if len(raw_legs) != len(ordered)-1:
-            raise HTTPException(502, 'Google 경로 구간 응답이 불완전합니다.')
-    else:
-        raw_legs = [dict(duration=f'{matrix[a][b]}s', distanceMeters=round(distance(nodes[a],nodes[b]))) for a,b in zip(order,order[1:])]
-        coordinates = [[p['lng'],p['lat']] for p in ordered]
+    raw_legs, coordinates = await valhalla.route_details(ordered, payload.mode)
+    if len(raw_legs) != len(ordered)-1:
+        raise HTTPException(502, 'Valhalla 경로 구간 응답이 불완전합니다.')
     legs = [dict(from_id=a['id'], to_id=b['id'], duration_seconds=round(float(raw['duration'].removesuffix('s'))),
                  distance_meters=raw.get('distanceMeters',0), mode=payload.mode, steps=raw.get('steps',[]),
                  departure_time=raw.get('departure_time'), arrival_time=raw.get('arrival_time'),
@@ -194,10 +177,9 @@ async def plan(payload: PlanInput):
                 total_travel_seconds=sum(l['duration_seconds'] for l in legs),
                 total_distance_meters=sum(l['distance_meters'] for l in legs),
                 total_stay_minutes=sum(p['stay_minutes'] for p in ordered[1:-1]),
-                source='google' if live else 'estimate',
+                source='valhalla',
                 time_zone=payload.time_zone,
-                optimization=('출발 시각 기준 추천 순서 · 방문 후 시각으로 구간별 재조회 (전체 일정 최단 보장 없음)'
-                              if payload.mode == 'TRANSIT' else '필수 시각을 지키는 순서 우선 · 이동·대기시간 반영' if appointments else '이동시간 행렬 기준 최단 순서 · 출발/도착 고정'))
+                optimization=('필수 시각을 지키는 순서 우선 · 이동·대기시간 반영' if appointments else '이동시간 행렬 기준 최단 순서 · 출발/도착 고정'))
     result['saved_at'] = datetime.now(timezone.utc).isoformat()
     result['cache_hit'] = False
     with db.connection() as conn:
@@ -276,10 +258,3 @@ def set_task_status(place_id: int, task_id: str, status: TaskStatus):
         task['done'] = status.done
         conn.execute('UPDATE places SET tasks=? WHERE id=?', (json.dumps(tasks, ensure_ascii=False),place_id))
         return {**place, 'tasks': tasks}
-
-
-@app.get('/api/map-place')
-async def map_place(place_id: str = Query(min_length=1, max_length=300)):
-    if not settings.google_maps_api_key:
-        raise HTTPException(503, '장소 정보 조회에는 Google 서버 API 키가 필요합니다.')
-    return await google.place_details(place_id)
