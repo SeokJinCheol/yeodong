@@ -27,10 +27,11 @@ export function RouteSectionManager({
     onDelete,
 }: Props) {
     const [sectionName, setSectionName] = useState('');
+    const [managementOpen, setManagementOpen] = useState(false);
     const [sectionAction, setSectionAction] = useState<'add' | 'rename' | 'delete' | null>(null);
     return (
         <section
-            className="route-sections"
+            className={ `route-sections ${managementOpen ? 'management-open' : ''}` }
             aria-label="날짜별 동선 구간"
         >
             <div className="section-toolbar">
@@ -95,7 +96,21 @@ export function RouteSectionManager({
                         ))
                     }
                 </div>
-                <div className="section-actions">
+                <button
+                    type="button"
+                    className="section-management-toggle"
+                    aria-label="구간 관리"
+                    aria-expanded={ managementOpen }
+                    onClick={ () => {
+                        setManagementOpen(!managementOpen);
+                        setSectionAction(null);
+                    } }
+                >
+                    {
+                        managementOpen ? '접기' : '관리'
+                    }
+                </button>
+                <div className="section-actions section-management-actions">
                     <Button
                         variant="secondary"
                         disabled={ mutating }

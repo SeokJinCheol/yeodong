@@ -5,9 +5,9 @@ import type { MapPlace, Place } from '../lib/types';
 import { Button } from '../components/atoms/Button';
 import { DeleteDayForm } from '../components/molecules/DeleteDayForm';
 import { CopyItineraryForm } from '../components/molecules/CopyItineraryForm';
+import { DailyItinerarySettings } from '../components/organisms/DailyItinerarySettings';
 import { MoveDayForm } from '../components/molecules/MoveDayForm';
 import { Badge } from '../components/atoms/Badge';
-import { ModeSwitch } from '../components/molecules/ModeSwitch';
 import { PlaceForm } from '../components/organisms/PlaceForm';
 import { RouteTimeline } from '../components/organisms/RouteTimeline';
 import { RouteOverview } from '../components/organisms/RouteOverview';
@@ -125,6 +125,15 @@ export function PlannerPage() {
         invalidOrder,
     } = fallbackRoute(places, date, start, end);
     const dates = plannerDates(allPlaces, sections, defaultSectionNames, date);
+    const dateTabsRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const tabs = dateTabsRef.current;
+        const selected = tabs?.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+        if (!tabs || !selected) return;
+        tabs.scrollTo({
+            left: selected.offsetLeft - (tabs.clientWidth - selected.offsetWidth) / 2,
+        });
+    }, [date]);
     async function copyItinerary(target: string) {
         const result = await data.copyItinerary({
             source_date: date,
@@ -201,12 +210,17 @@ export function PlannerPage() {
                 ref={ workspaceRef }
             >
                 <div className="workspace-toolbar">
-                    <div className="date-tabs">
+                    <div
+                        className="date-tabs"
+                        ref={ dateTabsRef }
+                        aria-label="여행 날짜"
+                    >
                         {
                             dates.map((d, i) => (
                                 <button
                                     key={ d }
                                     className={ date === d ? 'selected' : '' }
+                                    aria-pressed={ date === d }
                                     onClick={ () => setDate(d) }
                                 >
                                     <span>
@@ -225,6 +239,16 @@ export function PlannerPage() {
                             ))
                         }
                     </div>
+                    <button
+                        type="button"
+                        className="mobile-date-toggle"
+                        aria-label="다른 날짜 선택"
+                        aria-expanded={ calendarOpen }
+                        onClick={ () => setCalendarOpen((open) => !open) }
+                    >
+                        <CalendarDays size={ 18 } />
+                        날짜
+                    </button>
                     <label className="date-picker">
                         <CalendarDays size={ 16 } />
                         <input
@@ -247,6 +271,7 @@ export function PlannerPage() {
                             onSelect={ (d) => {
                                 setDate(d);
                                 setSelectedPlaceId(undefined);
+                                setCalendarOpen(false);
                             } }
                         />
                     )
@@ -295,57 +320,6 @@ export function PlannerPage() {
                             aria-labelledby={ `section-tab-${sectionId ?? 'default'}` }
                         >
                             <section className="itinerary">
-                                <div className="itinerary-title">
-                                    <div>
-                                        <span className="eyebrow">
-                                            DAILY ITINERARY
-                                        </span>
-                                        <h2>
-                                            {
-                                                dateLabel
-                                            }
-                                        </h2>
-                                    </div>
-                                    <ModeSwitch
-                                        unavailable={ unavailable }
-                                        value={ orderOnly ? 'MAP' : mode }
-                                        onChange={ (value) => {
-                                            setOrderOnly(value === 'MAP');
-                                            if (value !== 'MAP') setMode(value);
-                                        } }
-                                    />
-                                </div>
-                                {
-                                    Object.entries(unavailable)
-                                        .filter(([, reason]) => reason)
-                                        .map(([key, reason]) => (
-                                            <p
-                                                className="mode-unavailable-note"
-                                                key={ key }
-                                            >
-                                                {
-                                                    key === 'WALK'
-                                                        ? '도보'
-                                                        : key === 'DRIVE'
-                                                            ? '차량'
-                                                            : '대중교통'
-                                                }
-                                                { ' ' }
-                                                { '이용 불가: ' }
-                                                {
-                                                    reason
-                                                }
-                                            </p>
-                                        ))
-                                }
-                                {
-                                    orderOnly && (
-                                        <p className="map-mode-note">
-                                            Map · 방문 순서와 위치만 표시합니다. 경로 API는 조회하지
-                                            않습니다.
-                                        </p>
-                                    )
-                                }
                                 {
                                     invalidOrder && (
                                         <p className="mode-unavailable-note">
@@ -358,79 +332,84 @@ export function PlannerPage() {
                                         </p>
                                     )
                                 }
-                                <CopyItineraryForm
-                                    count={ dayPlaces.length }
-                                    busy={ mutating }
-                                    onCopy={ copyItinerary }
-                                />
-                                <MoveDayForm
-                                    key={ date }
-                                    date={ date }
-                                    count={ dayCount }
-                                    busy={ mutating }
-                                    onMove={ moveDay }
-                                />
-                                <DeleteDayForm
-                                    key={ `delete-${date}` }
-                                    date={ date }
-                                    count={ dayCount }
-                                    sectionCount={ daySections.length + 1 }
-                                    busy={ mutating }
-                                    onDelete={ deleteDay }
-                                />
-                                <RouteSettings
-                                    places={ places }
-                                    { ...settings }
-                                    onEndpointsChange={ settings.setEndpoint }
-                                    onSwap={ () => setSelectedPlaceId(undefined) }
-                                    hasPlan={ !!plan }
-                                    calculatedTime={ calculatedTime }
-                                    busy={ busy }
-                                    orderOnly={ orderOnly }
-                                    mutating={ mutating }
-                                    recalculate={ recalculate }
-                                />
-                                <div className="route-status">
-                                    <span>
-                                        <Sparkles size={ 14 } />
-                                        {
-                                            orderOnly
-                                                ? 'Map · 등록한 방문 순서'
-                                                : busy
-                                                    ? '가장 짧은 순서를 찾고 있어요'
-                                                    : plan
-                                                        ? `${Math.max(0, plan.places.length - 2)}개 방문지 · ${mode === 'TRANSIT' ? '출발 시각 기준 추천 순서' : plan.schedule_feasible ? '시간 조건 반영 순서' : '시간 조건 미충족'}`
-                                                        : '장소를 등록해 여행을 시작하세요'
-                                        }
-                                    </span>
-                                    <button
-                                        disabled={ busy || orderOnly }
-                                        onClick={ recalculate }
-                                        aria-label="동선 다시 계산"
-                                    >
-                                        <RefreshCw
-                                            size={ 14 }
-                                            className={ busy ? 'spin' : '' }
-                                        />
-                                    </button>
-                                </div>
-                                {
-                                    plan?.saved_at && (
-                                        <p className="saved-route-note">
+                                <DailyItinerarySettings
+                                    key={ `${date}:${sectionId}` }
+                                    dateLabel={ dateLabel }
+                                >
+                                    <CopyItineraryForm
+                                        count={ dayPlaces.length }
+                                        busy={ mutating }
+                                        onCopy={ copyItinerary }
+                                    />
+                                    <MoveDayForm
+                                        key={ date }
+                                        date={ date }
+                                        count={ dayCount }
+                                        busy={ mutating }
+                                        onMove={ moveDay }
+                                    />
+                                    <DeleteDayForm
+                                        key={ `delete-${date}` }
+                                        date={ date }
+                                        count={ dayCount }
+                                        sectionCount={ daySections.length + 1 }
+                                        busy={ mutating }
+                                        onDelete={ deleteDay }
+                                    />
+                                    <RouteSettings
+                                        places={ places }
+                                        { ...settings }
+                                        onEndpointsChange={ settings.setEndpoint }
+                                        onSwap={ () => setSelectedPlaceId(undefined) }
+                                        hasPlan={ !!plan }
+                                        calculatedTime={ calculatedTime }
+                                        busy={ busy }
+                                        orderOnly={ orderOnly }
+                                        mutating={ mutating }
+                                        recalculate={ recalculate }
+                                    />
+                                    <div className="route-status">
+                                        <span>
+                                            <Sparkles size={ 14 } />
                                             {
-                                                plan.cache_hit ? '저장된 동선' : '계산 후 저장된 동선'
+                                                orderOnly
+                                                    ? 'Map · 등록한 방문 순서'
+                                                    : busy
+                                                        ? '가장 짧은 순서를 찾고 있어요'
+                                                        : plan
+                                                            ? `${Math.max(0, plan.places.length - 2)}개 방문지 · ${mode === 'TRANSIT' ? '출발 시각 기준 추천 순서' : plan.schedule_feasible ? '시간 조건 반영 순서' : '시간 조건 미충족'}`
+                                                            : '장소를 등록해 여행을 시작하세요'
                                             }
-                                            { ' ·' }
-                                            { " " }
-                                            {
-                                                new Date(plan.saved_at).toLocaleString('ko-KR')
-                                            }
-                                            <br />
-                                            24시간 동안 같은 일정을 재사용합니다. 최신 경로는 다시 계산을
-                                            눌러 확인하세요.
-                                        </p>
-                                    )
-                                }
+                                        </span>
+                                        <button
+                                            disabled={ busy || orderOnly }
+                                            onClick={ recalculate }
+                                            aria-label="동선 다시 계산"
+                                        >
+                                            <RefreshCw
+                                                size={ 14 }
+                                                className={ busy ? 'spin' : '' }
+                                            />
+                                        </button>
+                                    </div>
+                                    {
+                                        plan?.saved_at && (
+                                            <p className="saved-route-note">
+                                                {
+                                                    plan.cache_hit ? '저장된 동선' : '계산 후 저장된 동선'
+                                                }
+                                                { ' ·' }
+                                                { " " }
+                                                {
+                                                    new Date(plan.saved_at).toLocaleString('ko-KR')
+                                                }
+                                                <br />
+                                                24시간 동안 같은 일정을 재사용합니다. 최신 경로는 다시
+                                                계산을 눌러 확인하세요.
+                                            </p>
+                                        )
+                                    }
+                                </DailyItinerarySettings>
                                 {
                                     error && (
                                         <div
@@ -517,11 +496,6 @@ export function PlannerPage() {
                                         />
                                     ) : fallbackPlaces.length > 0 ? (
                                         <>
-                                            <p className="mode-unavailable-note">
-                                                장소는 저장되었습니다. 아래 순서와 지도 마커로 일정을
-                                                확인하세요. 이동시간과 필수 시각 준수 여부는 계산하지
-                                                않습니다.
-                                            </p>
                                             <SavedPlaces
                                                 key={ `fallback-${date}` }
                                                 expanded
@@ -533,6 +507,11 @@ export function PlannerPage() {
                                                 busy={ mutating }
                                                 { ...placeActions }
                                             />
+                                            <p className="mode-unavailable-note">
+                                                장소는 저장되었습니다. 아래 순서와 지도 마커로 일정을
+                                                확인하세요. 이동시간과 필수 시각 준수 여부는 계산하지
+                                                않습니다.
+                                            </p>
                                         </>
                                     ) : (
                                         <div className="empty">
@@ -563,6 +542,12 @@ export function PlannerPage() {
                                 />
                             </section>
                             <RouteOverview
+                                mode={ orderOnly ? 'MAP' : mode }
+                                unavailable={ unavailable }
+                                onModeChange={ (value) => {
+                                    setOrderOnly(value === 'MAP');
+                                    if (value !== 'MAP') setMode(value);
+                                } }
                                 plan={ plan }
                                 selectedPlace={ selectedPlace }
                                 fallbackPlaces={ fallbackPlaces }

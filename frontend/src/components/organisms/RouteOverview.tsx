@@ -1,18 +1,63 @@
 import { Clock3, MapPin, Route, Sparkles } from 'lucide-react';
 import { minutes } from '../../lib/api';
-import type { MapPlace, Place, Plan } from '../../lib/types';
+import type { MapPlace, Mode, Place, Plan } from '../../lib/types';
 import { StatCard } from '../molecules/StatCard';
+import { ModeSwitch } from '../molecules/ModeSwitch';
 import { RouteMap } from './RouteMap';
 interface Props {
+    mode: Mode | 'MAP';
+    unavailable: Partial<Record<Mode | 'MAP', string>>;
+    onModeChange: (mode: Mode | 'MAP') => void;
     plan: Plan | null;
     selectedPlace?: Place;
     fallbackPlaces: Place[];
     busy: boolean;
     onAddPlace: (position: MapPlace) => void;
 }
-export function RouteOverview({ plan, selectedPlace, fallbackPlaces, busy, onAddPlace }: Props) {
+export function RouteOverview({
+    mode,
+    unavailable,
+    onModeChange,
+    plan,
+    selectedPlace,
+    fallbackPlaces,
+    busy,
+    onAddPlace,
+}: Props) {
     return (
         <div className="map-column">
+            <div className="map-mode-controls">
+                <ModeSwitch
+                    value={ mode }
+                    unavailable={ unavailable }
+                    onChange={ onModeChange }
+                />
+                {
+                    mode === 'MAP' && (
+                        <p className="map-mode-note">
+                            Map · 방문 순서와 위치만 표시합니다. 경로 API는 조회하지 않습니다.
+                        </p>
+                    )
+                }
+                {
+                    Object.entries(unavailable)
+                        .filter(([, reason]) => reason)
+                        .map(([key, reason]) => (
+                            <p
+                                className="mode-unavailable-note"
+                                key={ key }
+                            >
+                                {
+                                    key === 'WALK' ? '도보' : key === 'DRIVE' ? '차량' : '대중교통'
+                                }
+                                { ' 이용 불가: ' }
+                                {
+                                    reason
+                                }
+                            </p>
+                        ))
+                }
+            </div>
             <div className="stats">
                 <StatCard
                     icon={ <Route size={ 15 } /> }

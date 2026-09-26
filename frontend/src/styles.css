@@ -248,6 +248,7 @@ main {
     gap: 16px;
 }
 .date-tabs {
+    position: relative;
     display: flex;
     gap: 5px;
     height: 100%;
@@ -280,6 +281,9 @@ main {
     align-items: center;
     gap: 5px;
     color: #7e8d7f;
+}
+.mobile-date-toggle {
+    display: none;
 }
 .date-picker input {
     border: 0;
@@ -943,8 +947,7 @@ main {
         padding: 0 16px;
     }
     .intro {
-        padding: 28px 0 24px;
-        display: block;
+        display: none;
     }
     .intro h1 {
         font-size: 29px;
@@ -1442,13 +1445,48 @@ textarea:focus {
     .workspace-toolbar {
         height: auto;
         min-height: 61px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         padding: 10px;
         gap: 8px;
     }
     .date-tabs {
-        height: 45px;
-        flex: 1 1 100%;
+        height: 56px;
+        flex: 1 1 0;
+        scrollbar-width: none;
+        overscroll-behavior-x: contain;
+    }
+    .date-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    .date-tabs > button {
+        flex: 0 0 auto;
+        min-width: 68px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+        font-size: 14px;
+    }
+    .date-tabs span {
+        font-size: 10px;
+    }
+    .date-picker {
+        display: none;
+    }
+    .mobile-date-toggle {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 52px;
+        min-height: 52px;
+        border: 1px solid #dce2dc;
+        border-radius: 8px;
+        background: #f5f8f1;
+        color: #2f654f;
+        font: inherit;
+        font-size: 12px;
     }
     .modal-backdrop {
         padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
@@ -1782,15 +1820,19 @@ textarea:focus {
 .itinerary-title {
     flex-wrap: wrap;
 }
-.itinerary-title .mode-switch {
+.map-mode-controls {
+    margin-bottom: 16px;
+}
+.map-mode-controls .mode-switch {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     width: 100%;
     gap: 3px;
 }
-.itinerary-title .mode-switch > button {
+.map-mode-controls .mode-switch > button {
     width: 100%;
     min-width: 0;
+    min-height: 44px;
     padding: 9px 2px;
     justify-content: center;
     gap: 4px;
@@ -1801,6 +1843,9 @@ textarea:focus {
     color: #7a8c75;
     font-size: 11px;
     margin-bottom: 12px;
+}
+.map-mode-controls > p {
+    margin: 8px 0 0;
 }
 
 .saved-place-card {
@@ -2276,4 +2321,81 @@ input[type='time']::-webkit-datetime-edit {
 .place-map-link:hover {
     background: #e2ecdc;
     color: #35624a;
+}
+
+.daily-settings-toggle,
+.section-management-toggle {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .daily-settings .itinerary-title {
+        flex-wrap: nowrap;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .daily-settings .itinerary-title h2 {
+        font-size: 16px;
+        margin: 0;
+    }
+    .daily-settings-toggle,
+    .section-management-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        flex: 0 0 auto;
+        min-height: 44px;
+        padding: 6px 10px;
+        border: 1px solid #dce3d9;
+        border-radius: 8px;
+        background: white;
+        color: #526256;
+        font-size: 12px;
+    }
+    .daily-settings.expanded .daily-settings-toggle svg {
+        transform: rotate(180deg);
+    }
+    .daily-settings:not(.expanded) .daily-settings-content {
+        display: none;
+    }
+    .daily-settings input,
+    .daily-settings select,
+    .section-form input {
+        font-size: 16px;
+    }
+    .route-sections {
+        padding: 6px 10px;
+    }
+    .section-toolbar {
+        gap: 6px;
+        align-items: center;
+    }
+    .section-tabs {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+        gap: 5px;
+        padding: 0;
+        scrollbar-width: none;
+    }
+    .section-tabs button {
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 6px 10px;
+        font-size: 12px;
+        gap: 5px;
+        border-radius: 7px;
+    }
+    .section-tabs button span {
+        font-size: 10px;
+    }
+    .route-sections:not(.management-open) .section-management-actions,
+    .route-sections:not(.management-open) > p {
+        display: none;
+    }
+    .section-management-actions {
+        flex-basis: 100%;
+        gap: 10px;
+    }
 }
