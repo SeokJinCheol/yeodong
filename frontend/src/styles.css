@@ -689,7 +689,7 @@ main {
     max-width: 1252px;
     margin: 0 auto;
     border-top: 1px solid #e4e8df;
-    padding: 22px 0 30px;
+    padding: 10px 80px 10px 0;
     display: flex;
     justify-content: space-between;
     font-size: 10px;
@@ -826,9 +826,13 @@ main {
 }
 .modal-footer {
     flex-shrink: 0;
-    padding: 16px var(--modal-padding-inline) var(--modal-padding-block);
+    padding: 8px var(--modal-padding-inline);
     border-top: 1px solid #e5e9df;
     background: #fff;
+}
+.modal-footer > .button {
+    min-height: 44px;
+    padding: 8px 12px;
 }
 .modal h2 {
     margin-top: 5px;
@@ -1005,6 +1009,7 @@ main {
     .app-footer {
         display: block;
         font-size: 9px;
+        padding: 6px 64px 6px 0;
     }
     .app-footer > span:last-child {
         display: none;
@@ -1012,6 +1017,9 @@ main {
     .modal {
         --modal-padding-block: 20px;
         --modal-padding-inline: 20px;
+    }
+    .modal-footer {
+        padding: 4px var(--modal-padding-inline);
     }
     .modal h2 {
         font-size: 19px;
@@ -1630,9 +1638,6 @@ textarea:focus {
     padding: 4px 9px;
     font-size: 11px;
     box-shadow: 0 2px 10px #16382314;
-}
-.app-footer {
-    padding-bottom: 150px;
 }
 @media (max-width: 760px) {
     .floating-actions {
