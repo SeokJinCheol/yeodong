@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import db, geocoding, transit, scheduling, valhalla
 from .config import settings
-from .models import AssignInput, MoveDayInput, Place, PlaceInput, PlanInput, TaskStatus, SectionInput
+from .models import AssignInput, CopyItineraryInput, MoveDayInput, Place, PlaceInput, PlanInput, TaskStatus, SectionInput
 from .routing import cluster_places
 
 
@@ -225,6 +225,61 @@ def move_day(payload: MoveDayInput):
         conn.execute('UPDATE metadata SET key=? WHERE key=?',
                      (f'default-section:{payload.target_date.isoformat()}', f'default-section:{payload.source_date.isoformat()}'))
     return {'updated': count}
+
+
+@app.post('/api/itineraries/copy', status_code=201)
+def copy_itinerary(payload: CopyItineraryInput):
+    source, target = payload.source_date.isoformat(), payload.target_date.isoformat()
+    with db.connection() as conn:
+        # Lock before reading occupancy and limits so concurrent copies cannot collide.
+        conn.execute('BEGIN IMMEDIATE')
+        validate_section(conn, payload.section_id, payload.source_date)
+        rows = list(conn.execute('SELECT * FROM places WHERE visit_date=? AND section_id IS ? ORDER BY id',
+                                 (source, payload.section_id)))
+        if not rows:
+            raise HTTPException(404, '복사할 구간에 장소가 없습니다.')
+        ids = {row['id'] for row in rows}
+        for endpoint in (payload.start_id, payload.end_id):
+            if endpoint is None or endpoint in ids:
+                continue
+            row = conn.execute('SELECT * FROM places WHERE id=? AND section_id IS ?',
+                               (endpoint, payload.section_id)).fetchone()
+            if row is None:
+                raise HTTPException(422, '복사할 출발지 또는 도착지를 확인해 주세요.')
+            rows.append(row)
+            ids.add(endpoint)
+        if conn.execute('SELECT count(*) FROM places').fetchone()[0] + len(rows) > 100:
+            raise HTTPException(422, '복사 후 장소가 100개를 초과합니다. 저장한 장소를 정리해 주세요.')
+        occupied = (
+            conn.execute('SELECT 1 FROM places WHERE visit_date=?', (target,)).fetchone()
+            or conn.execute('SELECT 1 FROM sections WHERE visit_date=?', (target,)).fetchone()
+            or conn.execute('SELECT 1 FROM metadata WHERE key=?', (f'default-section:{target}',)).fetchone()
+        )
+        target_section = None
+        if occupied:
+            names = {row['name'] for row in conn.execute('SELECT name FROM sections WHERE visit_date=?', (target,))}
+            default = conn.execute('SELECT value FROM metadata WHERE key=?', (f'default-section:{target}',)).fetchone()
+            if default:
+                names.add(default['value'])
+            name, suffix = '복사된 일정', 2
+            while name in names:
+                name = f'복사된 일정 {suffix}'
+                suffix += 1
+            target_section = conn.execute('INSERT INTO sections (name,visit_date) VALUES (?,?)', (name, target)).lastrowid
+        else:
+            source_name = (conn.execute('SELECT name FROM sections WHERE id=?', (payload.section_id,)).fetchone()
+                           if payload.section_id is not None else
+                           conn.execute('SELECT value FROM metadata WHERE key=?', (f'default-section:{source}',)).fetchone())
+            name = source_name[0] if source_name else '기본 동선'
+            conn.execute('INSERT INTO metadata (key,value) VALUES (?,?)', (f'default-section:{target}', name))
+        copied_ids = {}
+        for row in sorted(rows, key=lambda row: row['id']):
+            values = {key: row[key] for key in row.keys() if key != 'id'}
+            values.update(visit_date=target, section_id=target_section)
+            cursor = conn.execute(f"INSERT INTO places ({','.join(values)}) VALUES ({','.join('?' for _ in values)})", list(values.values()))
+            copied_ids[row['id']] = cursor.lastrowid
+        return {'copied': len(rows), 'target_date': target, 'section_id': target_section,
+                'section_name': name, 'place_id_map': copied_ids}
 
 
 @app.delete('/api/days/{visit_date}', status_code=204)

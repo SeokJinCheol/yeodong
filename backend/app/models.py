@@ -60,3 +60,9 @@ class AssignInput(BaseModel):
 class MoveDayInput(BaseModel):
     source_date: date
     target_date: date
+
+
+class CopyItineraryInput(MoveDayInput):
+    section_id: int | None = Field(default=None, ge=1)
+    start_id: int | None = Field(default=None, ge=1)
+    end_id: int | None = Field(default=None, ge=1)

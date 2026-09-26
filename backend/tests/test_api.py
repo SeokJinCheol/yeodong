@@ -361,3 +361,85 @@ def test_delete_empty_day_removes_sections_and_default_name(client):
     assert client.get('/api/sections').json() == []
     assert client.get('/api/default-sections').json() == {}
     assert client.get('/api/places').json() == before
+
+
+def test_copy_itinerary_preserves_source_fields_and_isolates_copies(client):
+    source, target = '2031-01-01', '2031-01-02'
+    section = client.post('/api/sections', json=dict(name='오전', visit_date=source)).json()['id']
+    original = client.post('/api/places', json=dict(name='예약 장소', lat=35, lng=139, visit_date=source,
+        section_id=section, required_order=1, required_time='13:00', stay_minutes=45,
+        description='메모', tasks=[dict(id='task', text='예약', done=True)])).json()
+    other = client.post('/api/places', json=dict(name='다른 구간', lat=35, lng=139, visit_date=source)).json()
+    response = client.post('/api/itineraries/copy', json=dict(source_date=source, target_date=target,
+        section_id=section, start_id=original['id'], end_id=original['id']))
+    assert response.status_code == 201
+    result = response.json()
+    assert result['copied'] == 1 and result['section_id'] is None
+    assert result['section_name'] == '오전'
+    places = {p['id']: p for p in client.get('/api/places').json()}
+    copied = places[result['place_id_map'][str(original['id'])]]
+    assert copied == {**original, 'id': copied['id'], 'visit_date': target, 'section_id': None}
+    assert places[original['id']] == original and places[other['id']] == other
+    assert client.get('/api/default-sections').json()[target] == '오전'
+    client.patch(f"/api/places/{copied['id']}/tasks/task", json={'done': False})
+    assert next(p for p in client.get('/api/places').json() if p['id'] == original['id'])['tasks'][0]['done'] is True
+
+
+@pytest.mark.parametrize('existing', ['places', 'section', 'default-name'])
+def test_copy_to_existing_date_creates_unique_section(client, existing):
+    source, target = '2031-02-01', '2031-02-02'
+    original = client.post('/api/places', json=dict(name='원본', lat=35, lng=139, visit_date=source)).json()
+    if existing == 'places':
+        client.post('/api/places', json=dict(name='기존 일정', lat=35, lng=139, visit_date=target))
+    elif existing == 'section':
+        client.post('/api/sections', json=dict(name='빈 구간', visit_date=target))
+    else:
+        client.put('/api/default-sections', json=dict(name='기존 기본 구간', visit_date=target))
+    before = client.get('/api/places').json()
+    first = client.post('/api/itineraries/copy', json=dict(source_date=source, target_date=target)).json()
+    second = client.post('/api/itineraries/copy', json=dict(source_date=source, target_date=target)).json()
+    assert first['section_name'] == '복사된 일정' and second['section_name'] == '복사된 일정 2'
+    assert first['section_id'] != second['section_id']
+    after = {p['id']: p for p in client.get('/api/places').json()}
+    assert all(after[p['id']] == p for p in before)
+    assert after[first['place_id_map'][str(original['id'])]]['section_id'] == first['section_id']
+
+
+def test_copy_same_date_and_unscheduled_round_trip_endpoint(client):
+    source = '2031-03-01'
+    stop = client.post('/api/places', json=dict(name='방문', lat=35, lng=139, visit_date=source)).json()
+    endpoint = client.post('/api/places', json=dict(name='숙소', lat=35, lng=139)).json()
+    result = client.post('/api/itineraries/copy', json=dict(source_date=source, target_date=source,
+        start_id=endpoint['id'], end_id=endpoint['id'])).json()
+    assert result['copied'] == 2 and result['section_name'] == '복사된 일정'
+    assert len(set(result['place_id_map'].values())) == 2
+    places = {p['id']: p for p in client.get('/api/places').json()}
+    assert places[stop['id']] == stop and places[endpoint['id']] == endpoint
+
+
+def test_copy_invalid_source_or_endpoint_does_not_create_destination(client):
+    source, target = '2031-04-01', '2031-04-02'
+    before_sections = client.get('/api/sections').json()
+    assert client.post('/api/itineraries/copy', json=dict(source_date=source, target_date=target)).status_code == 404
+    client.post('/api/places', json=dict(name='장소', lat=35, lng=139, visit_date=source))
+    before_places = client.get('/api/places').json()
+    assert client.post('/api/itineraries/copy', json=dict(source_date=source, target_date=target, start_id=999999)).status_code == 422
+    assert client.post('/api/itineraries/copy', json=dict(source_date=source, target_date=target, section_id=999999)).status_code == 422
+    assert client.get('/api/places').json() == before_places
+    assert client.get('/api/sections').json() == before_sections
+    assert target not in client.get('/api/default-sections').json()
+
+
+def test_copy_limit_failure_rolls_back_all_changes(client):
+    from app import db
+    source, target = '2031-05-01', '2031-05-02'
+    with db.connection() as conn:
+        count = conn.execute('SELECT count(*) FROM places').fetchone()[0]
+        conn.executemany('INSERT INTO places (name,lat,lng,visit_date) VALUES (?,35,139,?)',
+                         [(f'장소 {i}', source) for i in range(100 - count)])
+    before = client.get('/api/places').json()
+    response = client.post('/api/itineraries/copy', json=dict(source_date=source, target_date=target))
+    assert response.status_code == 422
+    assert client.get('/api/places').json() == before
+    assert target not in client.get('/api/default-sections').json()
+    assert not any(s['visit_date'] == target for s in client.get('/api/sections').json())
